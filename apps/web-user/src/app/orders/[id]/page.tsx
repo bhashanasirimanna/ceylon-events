@@ -206,6 +206,15 @@ export default function OrderDetailPage() {
                     Seat {item.seatLabel}
                   </p>
                 )}
+                {order.status !== OrderStatus.CANCELLED &&
+                  order.status !== OrderStatus.REFUNDED && (
+                    <Link
+                      href={`/orders/${order.id}/items/${item.id}/food`}
+                      className="mt-1 inline-block text-sm text-brand-600 hover:underline"
+                    >
+                      Pre-order food for this ticket →
+                    </Link>
+                  )}
               </div>
               <span className="text-sm text-neutral-700">
                 {formatMoney(item.priceMinorUnits, order.currency)}

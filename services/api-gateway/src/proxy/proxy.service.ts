@@ -28,6 +28,7 @@ const ROUTES: Record<string, string | undefined> = {
   orders: process.env.ORDER_SERVICE_URL,
   payments: process.env.PAYMENT_SERVICE_URL,
   tickets: process.env.CHECKIN_SERVICE_URL,
+  "food-pre-orders": process.env.FOOD_ORDER_SERVICE_URL,
 };
 
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
@@ -80,6 +81,15 @@ export class ProxyService {
       data = undefined;
     }
 
+    // Server-Sent Events (e.g. the food-order dashboard's live-update
+    // stream) hold the connection open indefinitely and need their bytes
+    // flushed to the client as they arrive — buffering the whole response
+    // first (this proxy's normal behavior) would mean the client never
+    // sees anything until the upstream connection closes, defeating the
+    // point. Route these through a streaming pipe instead, with no
+    // timeout, and unwind cleanly if either side disconnects first.
+    const isStream = strippedPath.includes("/stream");
+
     try {
       const response = await firstValueFrom(
         this.httpService.request({
@@ -87,7 +97,8 @@ export class ProxyService {
           method: req.method,
           headers,
           data,
-          timeout: 15000,
+          timeout: isStream ? 0 : 15000,
+          responseType: isStream ? "stream" : "json",
           validateStatus: () => true,
         }),
       );
@@ -98,7 +109,19 @@ export class ProxyService {
         }
         res.setHeader(key, value as string | string[]);
       }
-      res.status(response.status).send(response.data);
+      res.status(response.status);
+
+      if (isStream) {
+        const upstreamStream = response.data as NodeJS.ReadableStream;
+        req.on("close", () => {
+          if ("destroy" in upstreamStream) {
+            (upstreamStream as { destroy: () => void }).destroy();
+          }
+        });
+        upstreamStream.pipe(res);
+      } else {
+        res.send(response.data);
+      }
     } catch (error) {
       this.logger.warn(`Upstream request to ${targetUrl} failed: ${(error as Error).message}`);
       res.status(502).json({

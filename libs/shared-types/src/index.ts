@@ -7,3 +7,4 @@ export * from "./venue";
 export * from "./event";
 export * from "./order";
 export * from "./payment";
+export * from "./food-order";

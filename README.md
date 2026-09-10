@@ -7,8 +7,9 @@ consolidated per-table prep view before doors open.
 ## Status
 
 Phase 0 (foundations), Phase 1 (restaurant onboarding & menu management),
-Phase 2 (venue seating system), Phase 3 (event & ticketing core), and
-Phase 4 (payments) are done. See the build spec for the full phase plan.
+Phase 2 (venue seating system), Phase 3 (event & ticketing core),
+Phase 4 (payments), and Phase 5 (food pre-order — the platform's core
+differentiator) are done. See the build spec for the full phase plan.
 
 Implemented so far:
 
@@ -37,19 +38,35 @@ Implemented so far:
   item the first time a confirmed order's tickets are viewed (idempotent
   on a DB unique constraint), plus a door-staff lookup/check-in flow
   scoped to the ticket's own restaurant.
+- **Food Order Service** — a food pre-order (one per ticket, with its own
+  line items) tied to a confirmed/pending order, editable up to a
+  configurable per-event cutoff, validated against the restaurant's own
+  menu and enriched with a denormalized table number looked up from the
+  event's seat-map snapshot. A kitchen status workflow (Received →
+  Preparing → Ready → Served, single or bulk), a pre-event aggregate
+  quantity-per-menu-item report (the platform's headline "prep with real
+  numbers" feature), and a Server-Sent Events stream so the restaurant
+  dashboard updates live. Never touches payment — food is always settled
+  at the venue.
 - **API Gateway** — reverse proxy (including correct
-  `application/x-www-form-urlencoded` forwarding for PayHere's webhook),
-  rate limiting, aggregated health.
+  `application/x-www-form-urlencoded` forwarding for PayHere's webhook,
+  and a streaming pass-through mode for SSE endpoints so a live
+  connection isn't buffered before reaching the client), rate limiting,
+  aggregated health.
 - **web-admin** — restaurant approval queue, restaurant creation, seat-map
   builder (canvas-based, drag to position, publish versions), event
   creation/publishing and ticket-tier management, payment-proof
   verification queue.
 - **web-restaurant** — menu management, staff invites, a door check-in
-  scanner (manual/scanner-keyboard QR entry, lookup-then-confirm).
+  scanner (manual/scanner-keyboard QR entry, lookup-then-confirm), and a
+  live food-order dashboard grouped by table with a bulk status workflow
+  and the pre-event prep-quantity summary.
 - **web-user** — restaurant discovery, menu preview, event discovery,
   seated/general-admission checkout flow (seat hold → review → place
   order), PayHere redirect checkout or payment-proof upload, order
-  history/cancellation, and a QR ticket view once an order is confirmed.
+  history/cancellation, a QR ticket view once an order is confirmed, and
+  a food pre-order form per ticket (browse the venue's menu, set
+  quantities/notes, edit until the cutoff).
 - Full Docker Compose stack: Postgres (one database per service),
   Redis, RabbitMQ, MinIO, pgAdmin.
 

@@ -1,6 +1,7 @@
 import type {
   DietaryTag,
   EventStatus,
+  FoodOrderStatus,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
@@ -184,4 +185,29 @@ export interface Ticket {
   status: TicketStatus;
   checkedInAt: string | null;
   qrCodeDataUrl: string;
+}
+
+export interface FoodPreOrderItemSnapshot {
+  id: string;
+  menuItemId: string;
+  menuItemName: string;
+  quantity: number;
+  notes: string | null;
+  priceMinorUnits: number;
+}
+
+export interface FoodPreOrderSnapshot {
+  id: string;
+  orderId: string;
+  orderItemId: string;
+  eventId: string;
+  restaurantId: string;
+  buyerId: string;
+  seatId: string | null;
+  seatLabel: string | null;
+  tableNumber: string | null;
+  status: FoodOrderStatus;
+  items: FoodPreOrderItemSnapshot[];
+  createdAt: string;
+  updatedAt: string;
 }
