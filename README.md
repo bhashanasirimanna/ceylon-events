@@ -7,8 +7,8 @@ consolidated per-table prep view before doors open.
 ## Status
 
 Phase 0 (foundations), Phase 1 (restaurant onboarding & menu management),
-and Phase 2 (venue seating system) are done. See the build spec for the
-full phase plan.
+Phase 2 (venue seating system), and Phase 3 (event & ticketing core) are
+done. See the build spec for the full phase plan.
 
 Implemented so far:
 
@@ -19,12 +19,20 @@ Implemented so far:
 - **Media Service** — presigned upload URLs against MinIO/S3.
 - **Venue/Seating Service** — seat-map authoring (sections/tables/seats),
   immutable published versions, Redis-backed seat hold-locks with TTL.
+- **Event Service** — event CRUD, publish/cancel lifecycle, ticket tiers
+  (pricing, sale windows, optional section restrictions, quantity limits).
+- **Order/Ticketing Service** — checkout (pre-payment): validates the
+  event/tier/seat-hold against Event and Venue services, snapshots price
+  and seat label, creates a PENDING order. Deliberately does not mark
+  seats permanently sold — that's deferred to the future Payment Service.
 - **API Gateway** — reverse proxy, rate limiting, aggregated health.
 - **web-admin** — restaurant approval queue, restaurant creation, seat-map
-  builder (canvas-based, drag to position, publish versions).
+  builder (canvas-based, drag to position, publish versions), event
+  creation/publishing and ticket-tier management.
 - **web-restaurant** — menu management, staff invites.
-- **web-user** — restaurant discovery, menu preview, interactive seat-picker
-  preview (hold/release a seat against a published seat map).
+- **web-user** — restaurant discovery, menu preview, event discovery,
+  seated/general-admission checkout flow (seat hold → review → place
+  order), order history and cancellation.
 - Full Docker Compose stack: Postgres (one database per service),
   Redis, RabbitMQ, MinIO, pgAdmin.
 

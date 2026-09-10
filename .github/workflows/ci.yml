@@ -34,6 +34,8 @@ jobs:
           - services/restaurant-service
           - services/media-service
           - services/venue-service
+          - services/event-service
+          - services/order-service
           - services/api-gateway
           - apps/web-admin
           - apps/web-user

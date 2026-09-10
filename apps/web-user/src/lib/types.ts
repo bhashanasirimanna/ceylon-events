@@ -1,4 +1,10 @@
-import type { DietaryTag, RestaurantStatus } from "@ceylon/shared-types";
+import type {
+  DietaryTag,
+  EventStatus,
+  OrderStatus,
+  PaymentMethod,
+  RestaurantStatus,
+} from "@ceylon/shared-types";
 
 export interface Restaurant {
   id: string;
@@ -55,4 +61,54 @@ export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+}
+
+export interface EventListing {
+  id: string;
+  restaurantId: string;
+  seatMapVersionId: string | null;
+  title: string;
+  description: string | null;
+  bannerImageUrl: string | null;
+  startsAt: string;
+  status: EventStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketTier {
+  id: string;
+  eventId: string;
+  name: string;
+  priceMinorUnits: number;
+  currency: string;
+  saleStartAt: string | null;
+  saleEndAt: string | null;
+  allowedSectionIds: string[] | null;
+  quantityLimit: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  ticketTierId: string;
+  seatId: string | null;
+  seatLabel: string | null;
+  priceMinorUnits: number;
+  createdAt: string;
+}
+
+export interface Order {
+  id: string;
+  buyerId: string;
+  eventId: string;
+  status: OrderStatus;
+  totalMinorUnits: number;
+  currency: string;
+  paymentMethod: PaymentMethod;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
 }

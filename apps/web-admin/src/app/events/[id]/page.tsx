@@ -1,0 +1,385 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { Badge, Button, Card } from "@ceylon/design-system";
+import { EventStatus } from "@ceylon/shared-types";
+import { useAuth } from "@/lib/auth-context";
+import { apiFetch, ApiError } from "@/lib/api-client";
+import type { Event, TicketTier } from "@/lib/types";
+import { Nav } from "@/components/Nav";
+
+const STATUS_TONE: Record<EventStatus, "neutral" | "success" | "danger"> = {
+  [EventStatus.DRAFT]: "neutral",
+  [EventStatus.PUBLISHED]: "success",
+  [EventStatus.CANCELLED]: "danger",
+  [EventStatus.COMPLETED]: "neutral",
+};
+
+function toDateTimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
+    d.getHours(),
+  )}:${pad(d.getMinutes())}`;
+}
+
+export default function EventManagePage() {
+  const { id: eventId } = useParams<{ id: string }>();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  const [event, setEvent] = useState<Event | null>(null);
+  const [tiers, setTiers] = useState<TicketTier[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [statusActioning, setStatusActioning] = useState(false);
+
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editStartsAt, setEditStartsAt] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const [tierName, setTierName] = useState("");
+  const [tierPrice, setTierPrice] = useState("");
+  const [tierCurrency, setTierCurrency] = useState("LKR");
+  const [tierSaleStart, setTierSaleStart] = useState("");
+  const [tierSaleEnd, setTierSaleEnd] = useState("");
+  const [tierQuantityLimit, setTierQuantityLimit] = useState("");
+  const [creatingTier, setCreatingTier] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const [eventResult, tiersResult] = await Promise.all([
+        apiFetch<Event>(`/events/${eventId}`),
+        apiFetch<TicketTier[]>(`/events/${eventId}/ticket-tiers`),
+      ]);
+      setEvent(eventResult);
+      setTiers(tiersResult);
+      setEditTitle(eventResult.title);
+      setEditDescription(eventResult.description ?? "");
+      setEditStartsAt(toDateTimeLocal(eventResult.startsAt));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to load event");
+    }
+  }, [eventId]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login");
+      return;
+    }
+    if (user) {
+      load();
+    }
+  }, [isLoading, user, router, load]);
+
+  async function setStatus(status: EventStatus) {
+    setStatusActioning(true);
+    setError(null);
+    try {
+      await apiFetch(`/events/${eventId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Action failed");
+    } finally {
+      setStatusActioning(false);
+    }
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingEdit(true);
+    setError(null);
+    try {
+      await apiFetch(`/events/${eventId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription || undefined,
+          startsAt: new Date(editStartsAt).toISOString(),
+        }),
+      });
+      setEditing(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to save changes");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function createTier(e: React.FormEvent) {
+    e.preventDefault();
+    setCreatingTier(true);
+    setError(null);
+    try {
+      await apiFetch(`/events/${eventId}/ticket-tiers`, {
+        method: "POST",
+        body: JSON.stringify({
+          name: tierName,
+          priceMinorUnits: Math.round(Number(tierPrice) * 100),
+          currency: tierCurrency,
+          saleStartAt: tierSaleStart
+            ? new Date(tierSaleStart).toISOString()
+            : null,
+          saleEndAt: tierSaleEnd ? new Date(tierSaleEnd).toISOString() : null,
+          quantityLimit: tierQuantityLimit ? Number(tierQuantityLimit) : null,
+        }),
+      });
+      setTierName("");
+      setTierPrice("");
+      setTierSaleStart("");
+      setTierSaleEnd("");
+      setTierQuantityLimit("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to create ticket tier");
+    } finally {
+      setCreatingTier(false);
+    }
+  }
+
+  async function deleteTier(id: string) {
+    if (!confirm("Delete this ticket tier?")) return;
+    setError(null);
+    try {
+      await apiFetch(`/ticket-tiers/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete ticket tier");
+    }
+  }
+
+  if (isLoading || !user) {
+    return null;
+  }
+
+  return (
+    <>
+      <Nav />
+      <main className="mx-auto max-w-3xl px-6 py-10">
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+        {!event ? (
+          <p className="text-sm text-neutral-500">Loading…</p>
+        ) : (
+          <>
+            <div className="mb-6">
+              <Link
+                href={`/restaurants/${event.restaurantId}/events`}
+                className="text-sm text-brand-600 hover:underline"
+              >
+                Back to events
+              </Link>
+            </div>
+
+            <Card className="mb-6">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg font-semibold text-neutral-900">
+                    {event.title}
+                  </h1>
+                  <Badge tone={STATUS_TONE[event.status]}>{event.status}</Badge>
+                </div>
+                <div className="flex gap-2">
+                  {event.status === EventStatus.DRAFT && (
+                    <Button
+                      disabled={statusActioning}
+                      onClick={() => setStatus(EventStatus.PUBLISHED)}
+                    >
+                      Publish
+                    </Button>
+                  )}
+                  {event.status === EventStatus.PUBLISHED && (
+                    <Button
+                      variant="secondary"
+                      disabled={statusActioning}
+                      onClick={() => setStatus(EventStatus.COMPLETED)}
+                    >
+                      Mark completed
+                    </Button>
+                  )}
+                  {(event.status === EventStatus.DRAFT ||
+                    event.status === EventStatus.PUBLISHED) && (
+                    <Button
+                      variant="danger"
+                      disabled={statusActioning}
+                      onClick={() => setStatus(EventStatus.CANCELLED)}
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {!editing ? (
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-neutral-500">
+                    {new Date(event.startsAt).toLocaleString()}
+                  </p>
+                  {event.description && (
+                    <p className="text-sm text-neutral-700">
+                      {event.description}
+                    </p>
+                  )}
+                  <button
+                    className="mt-2 self-start text-sm text-brand-600 hover:underline"
+                    onClick={() => setEditing(true)}
+                  >
+                    Edit details
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={saveEdit} className="flex flex-col gap-3">
+                  <input
+                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    required
+                  />
+                  <textarea
+                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    rows={3}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                  />
+                  <input
+                    type="datetime-local"
+                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    value={editStartsAt}
+                    onChange={(e) => setEditStartsAt(e.target.value)}
+                    required
+                  />
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={savingEdit}>
+                      {savingEdit ? "Saving…" : "Save"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setEditing(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </Card>
+
+            <h2 className="mb-3 font-medium text-neutral-900">
+              Ticket tiers
+            </h2>
+
+            <div className="mb-6 flex flex-col gap-3">
+              {tiers.length === 0 && (
+                <p className="text-sm text-neutral-500">
+                  No ticket tiers yet.
+                </p>
+              )}
+              {tiers.map((tier) => (
+                <Card key={tier.id} className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-neutral-900">
+                      {tier.name}
+                    </h3>
+                    <p className="text-sm text-neutral-500">
+                      {tier.currency} {(tier.priceMinorUnits / 100).toFixed(2)}
+                      {tier.quantityLimit !== null &&
+                        ` · limit ${tier.quantityLimit}`}
+                    </p>
+                    {(tier.saleStartAt || tier.saleEndAt) && (
+                      <p className="text-xs text-neutral-400">
+                        Sale window:{" "}
+                        {tier.saleStartAt
+                          ? new Date(tier.saleStartAt).toLocaleString()
+                          : "now"}{" "}
+                        –{" "}
+                        {tier.saleEndAt
+                          ? new Date(tier.saleEndAt).toLocaleString()
+                          : "no end"}
+                      </p>
+                    )}
+                  </div>
+                  <Button variant="danger" onClick={() => deleteTier(tier.id)}>
+                    Delete
+                  </Button>
+                </Card>
+              ))}
+            </div>
+
+            <Card>
+              <h3 className="mb-3 font-medium text-neutral-900">
+                + Add ticket tier
+              </h3>
+              <form onSubmit={createTier} className="flex flex-col gap-3">
+                <input
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  placeholder="Name (e.g. General, VIP)"
+                  value={tierName}
+                  onChange={(e) => setTierName(e.target.value)}
+                  required
+                />
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-2/3 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    placeholder="Price"
+                    value={tierPrice}
+                    onChange={(e) => setTierPrice(e.target.value)}
+                    required
+                  />
+                  <input
+                    className="w-1/3 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    placeholder="Currency"
+                    value={tierCurrency}
+                    onChange={(e) => setTierCurrency(e.target.value)}
+                    maxLength={3}
+                    required
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <label className="flex w-1/2 flex-col gap-1 text-xs text-neutral-500">
+                    Sale starts (optional)
+                    <input
+                      type="datetime-local"
+                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      value={tierSaleStart}
+                      onChange={(e) => setTierSaleStart(e.target.value)}
+                    />
+                  </label>
+                  <label className="flex w-1/2 flex-col gap-1 text-xs text-neutral-500">
+                    Sale ends (optional)
+                    <input
+                      type="datetime-local"
+                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      value={tierSaleEnd}
+                      onChange={(e) => setTierSaleEnd(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  placeholder="Quantity limit (optional)"
+                  value={tierQuantityLimit}
+                  onChange={(e) => setTierQuantityLimit(e.target.value)}
+                />
+                <Button type="submit" disabled={creatingTier}>
+                  {creatingTier ? "Adding…" : "Add ticket tier"}
+                </Button>
+              </form>
+            </Card>
+          </>
+        )}
+      </main>
+    </>
+  );
+}

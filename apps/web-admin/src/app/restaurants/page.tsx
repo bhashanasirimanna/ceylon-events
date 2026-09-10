@@ -107,6 +107,9 @@ export default function RestaurantsPage() {
                   <Link href={`/restaurants/${restaurant.id}/seat-maps`}>
                     <Button variant="secondary">Seat maps</Button>
                   </Link>
+                  <Link href={`/restaurants/${restaurant.id}/events`}>
+                    <Button variant="secondary">Events</Button>
+                  </Link>
                   {restaurant.status === RestaurantStatus.PENDING && (
                     <Button
                       variant="primary"

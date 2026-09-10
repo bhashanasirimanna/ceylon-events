@@ -23,6 +23,9 @@ const ROUTES: Record<string, string | undefined> = {
   sections: process.env.VENUE_SERVICE_URL,
   tables: process.env.VENUE_SERVICE_URL,
   seats: process.env.VENUE_SERVICE_URL,
+  events: process.env.EVENT_SERVICE_URL,
+  "ticket-tiers": process.env.EVENT_SERVICE_URL,
+  orders: process.env.ORDER_SERVICE_URL,
 };
 
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
