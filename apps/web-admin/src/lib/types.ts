@@ -5,6 +5,8 @@ import type {
   PaymentStatus,
   DiscountType,
   RedemptionType,
+  RatingSubjectType,
+  NotificationType,
 } from "@ceylon/shared-types";
 
 export interface UserResponse {
@@ -117,4 +119,95 @@ export interface PaymentProof {
   reviewNotes: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface NotificationSnapshot {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  metadata: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationListResult {
+  items: NotificationSnapshot[];
+  total: number;
+  unreadCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface RatingSnapshot {
+  id: string;
+  buyerId: string;
+  orderId: string;
+  eventId: string;
+  restaurantId: string;
+  subjectType: RatingSubjectType;
+  subjectId: string;
+  stars: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface RatingSummary {
+  average: number | null;
+  count: number;
+}
+
+export interface EventReportTierBreakdown {
+  ticketTierId: string;
+  ticketTierName: string;
+  sold: number;
+  revenueMinorUnits: number;
+}
+
+export interface EventReportFoodItemSummary {
+  menuItemId: string;
+  menuItemName: string;
+  totalQuantity: number;
+}
+
+export interface EventReport {
+  eventId: string;
+  eventTitle: string;
+  restaurantId: string;
+  startsAt: string;
+  ticketsSold: number;
+  revenueMinorUnits: number;
+  currency: string;
+  tierBreakdown: EventReportTierBreakdown[];
+  foodItemSummary: EventReportFoodItemSummary[];
+  ratingSummary: RatingSummary;
+}
+
+export interface RestaurantReportEvent {
+  eventId: string;
+  eventTitle: string;
+  startsAt: string;
+  ticketsSold: number;
+  revenueMinorUnits: number;
+}
+
+export interface RestaurantReport {
+  restaurantId: string;
+  restaurantName: string;
+  eventCount: number;
+  ticketsSold: number;
+  revenueMinorUnits: number;
+  currency: string;
+  ratingSummary: RatingSummary;
+  events: RestaurantReportEvent[];
+}
+
+export interface PlatformTotals {
+  totalOrders: number;
+  confirmedOrders: number;
+  totalRevenueMinorUnits: number;
+  currency: string;
+  totalRestaurants: number;
+  totalEvents: number;
 }

@@ -4,6 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
@@ -13,13 +14,14 @@ import { isAxiosError } from "axios";
 import {
   DiscountType,
   EventStatus,
+  NotificationType,
   OrderStatus,
   SeatStatus,
   type JwtAccessPayload,
   type PaginatedResult,
 } from "@ceylon/shared-types";
 import { Repository } from "typeorm";
-import { canAccessOrder } from "../common/auth-helpers";
+import { canAccessOrder, isPlatformAdmin } from "../common/auth-helpers";
 import { PromoCodesService } from "../promo-codes/promo-codes.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { OrderItem } from "./entities/order-item.entity";
@@ -39,8 +41,11 @@ export interface OrderWithItems extends Order {
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
   private readonly eventServiceUrl = process.env.EVENT_SERVICE_URL;
   private readonly venueServiceUrl = process.env.VENUE_SERVICE_URL;
+  private readonly notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL;
+  private readonly internalSecret = process.env.INTERNAL_SERVICE_SECRET ?? "";
 
   constructor(
     @InjectRepository(Order)
@@ -328,6 +333,36 @@ export class OrdersService {
     return { ...order, items: savedItems };
   }
 
+  /**
+   * Fire-and-forget: notifications are a non-critical side effect of order
+   * confirmation/cancellation, never a reason for either to fail. A
+   * notification-service outage just means the in-app notification never
+   * arrives, logged here rather than propagated.
+   */
+  private notifyBuyer(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+    metadata: Record<string, unknown>,
+  ): void {
+    if (!this.notificationServiceUrl) return;
+    firstValueFrom(
+      this.httpService.post(
+        `${this.notificationServiceUrl}/internal/notifications`,
+        { userId, type, title, body, metadata },
+        {
+          headers: { "x-internal-secret": this.internalSecret },
+          timeout: HTTP_TIMEOUT_MS,
+        },
+      ),
+    ).catch((error) => {
+      this.logger.warn(
+        `Failed to notify user ${userId} (${type}): ${(error as Error).message}`,
+      );
+    });
+  }
+
   private async countSoldItemsForTier(ticketTierId: string): Promise<number> {
     return this.orderItemsRepository
       .createQueryBuilder("item")
@@ -416,7 +451,62 @@ export class OrdersService {
     }
     order.status = OrderStatus.CANCELLED;
     await this.ordersRepository.save(order);
+    this.notifyBuyer(
+      order.buyerId,
+      NotificationType.ORDER_CANCELLED,
+      "Your order was cancelled",
+      "Your order has been cancelled.",
+      { orderId: order.id, eventId: order.eventId },
+    );
     return this.withItems(order);
+  }
+
+  /**
+   * Restaurant-staff-scoped view for reporting — every order placed
+   * against one of their events, regardless of buyer. Ownership is
+   * enforced here (via the event's restaurantId) rather than per-order,
+   * since orders themselves don't carry a restaurantId.
+   */
+  async findForEventAsStaff(
+    eventId: string,
+    caller: JwtAccessPayload,
+  ): Promise<OrderWithItems[]> {
+    const event = await this.fetchEvent(eventId);
+    if (!isPlatformAdmin(caller) && caller.restaurantId !== event.restaurantId) {
+      throw new ForbiddenException(
+        "You may not view orders for this restaurant's event",
+      );
+    }
+    const orders = await this.ordersRepository.find({
+      where: { eventId },
+      order: { createdAt: "DESC" },
+    });
+    return Promise.all(orders.map((order) => this.withItems(order)));
+  }
+
+  async platformTotals(): Promise<{
+    totalOrders: number;
+    confirmedOrders: number;
+    totalRevenueMinorUnits: number;
+    currency: string;
+  }> {
+    const totalOrders = await this.ordersRepository.count();
+    const confirmedOrders = await this.ordersRepository.count({
+      where: { status: OrderStatus.CONFIRMED },
+    });
+    const row = await this.ordersRepository
+      .createQueryBuilder("order")
+      .where("order.status IN (:...statuses)", {
+        statuses: [OrderStatus.CONFIRMED, OrderStatus.PAID],
+      })
+      .select("SUM(order.total_minor_units)", "total")
+      .getRawOne<{ total: string | null }>();
+    return {
+      totalOrders,
+      confirmedOrders,
+      totalRevenueMinorUnits: Number(row?.total ?? 0),
+      currency: "LKR",
+    };
   }
 
   /**
@@ -440,6 +530,13 @@ export class OrdersService {
     }
     order.status = OrderStatus.CONFIRMED;
     await this.ordersRepository.save(order);
+    this.notifyBuyer(
+      order.buyerId,
+      NotificationType.ORDER_CONFIRMED,
+      "Your order is confirmed",
+      "Your payment went through and your order is confirmed. See you there!",
+      { orderId: order.id, eventId: order.eventId },
+    );
     return this.withItems(order);
   }
 }

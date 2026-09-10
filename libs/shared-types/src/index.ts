@@ -10,3 +10,6 @@ export * from "./payment";
 export * from "./food-order";
 export * from "./offer";
 export * from "./promo-code";
+export * from "./rating";
+export * from "./notification";
+export * from "./report";

@@ -7,14 +7,17 @@ import {
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  RatingSubjectType,
   TicketStatus,
 } from "@ceylon/shared-types";
 import { Badge, Button, Card } from "@ceylon/design-system";
 import type { OfferSnapshot } from "@ceylon/shared-types";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
+import { RatingForm } from "@/components/RatingForm";
 import type {
   EventListing,
+  FoodPreOrderSnapshot,
   Order,
   PayHereCheckoutParams,
   PaymentForOrder,
@@ -79,6 +82,9 @@ export default function OrderDetailPage() {
   >({});
   const [paymentInfo, setPaymentInfo] = useState<PaymentForOrder | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [foodPreOrdersByItem, setFoodPreOrdersByItem] = useState<
+    Record<string, FoodPreOrderSnapshot | null>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -131,6 +137,17 @@ export default function OrderDetailPage() {
           ),
         );
         setOffersByTier(Object.fromEntries(offerEntries));
+
+        const foodPreOrderEntries = await Promise.all(
+          o.items.map((item) =>
+            apiFetch<FoodPreOrderSnapshot | null>(
+              `/food-pre-orders/by-order-item/${item.id}`,
+            )
+              .then((fpo) => [item.id, fpo] as const)
+              .catch(() => [item.id, null] as const),
+          ),
+        );
+        setFoodPreOrdersByItem(Object.fromEntries(foodPreOrderEntries));
       })
       .catch((err: unknown) =>
         setError(err instanceof ApiError ? err.message : "Failed to load order"),
@@ -171,6 +188,9 @@ export default function OrderDetailPage() {
     return null;
   }
 
+  const eventStarted = !!event && new Date(event.startsAt).getTime() <= Date.now();
+  const canRate = order.status === OrderStatus.CONFIRMED && eventStarted;
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
       {paymentReturnFlag === "return" && (
@@ -208,6 +228,7 @@ export default function OrderDetailPage() {
         <div className="space-y-3">
           {order.items.map((item) => {
             const offers = offersByTier[item.ticketTierId] ?? [];
+            const foodPreOrder = foodPreOrdersByItem[item.id];
             return (
               <div
                 key={item.id}
@@ -243,6 +264,28 @@ export default function OrderDetailPage() {
                         Pre-order food for this ticket →
                       </Link>
                     )}
+                  {foodPreOrder && foodPreOrder.items.length > 0 && (
+                    <div className="mt-2 space-y-2 border-t border-neutral-100 pt-2">
+                      {foodPreOrder.items.map((line) => (
+                        <div key={line.id}>
+                          <p className="text-xs text-neutral-500">
+                            {line.quantity}× {line.menuItemName}
+                          </p>
+                          {canRate && (
+                            <RatingForm
+                              orderId={order.id}
+                              eventId={order.eventId}
+                              subjectType={RatingSubjectType.MENU_ITEM}
+                              subjectId={line.menuItemId}
+                              label={`Rate ${line.menuItemName}`}
+                              ratedLabel={`You rated ${line.menuItemName}`}
+                              compact
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span className="text-sm text-neutral-700">
                   {formatMoney(item.priceMinorUnits, order.currency)}
@@ -288,6 +331,19 @@ export default function OrderDetailPage() {
 
       {order.status === OrderStatus.CONFIRMED && (
         <TicketsSection tickets={tickets} />
+      )}
+
+      {canRate && event && (
+        <Card className="mt-6">
+          <RatingForm
+            orderId={order.id}
+            eventId={event.id}
+            subjectType={RatingSubjectType.EVENT}
+            subjectId={event.id}
+            label="Rate this event"
+            ratedLabel="You rated this event"
+          />
+        </Card>
       )}
 
       {order.status === OrderStatus.PENDING && (

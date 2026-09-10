@@ -4,11 +4,19 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api-client";
-import type { MenuCategory, Restaurant } from "@/lib/types";
+import type { MenuCategory, RatingSummary, Restaurant } from "@/lib/types";
 import { Badge, Button, Card } from "@ceylon/design-system";
 
 interface LatestSeatMapVersion {
   id: string;
+}
+
+function formatRatingSummary(summary: RatingSummary | null): string | null {
+  if (!summary) return null;
+  if (summary.count === 0 || summary.average === null) {
+    return "No ratings yet";
+  }
+  return `★ ${summary.average.toFixed(1)} (${summary.count} rating${summary.count === 1 ? "" : "s"})`;
 }
 
 export default function RestaurantDetailPage() {
@@ -18,6 +26,9 @@ export default function RestaurantDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [seatMapVersionId, setSeatMapVersionId] = useState<string | null>(
+    null,
+  );
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(
     null,
   );
 
@@ -41,6 +52,10 @@ export default function RestaurantDetailPage() {
     )
       .then((version) => setSeatMapVersionId(version.id))
       .catch(() => setSeatMapVersionId(null));
+
+    apiFetch<RatingSummary>(`/ratings/summary?restaurantId=${params.id}`)
+      .then(setRatingSummary)
+      .catch(() => setRatingSummary(null));
   }, [params.id]);
 
   if (isLoading) {
@@ -57,9 +72,16 @@ export default function RestaurantDetailPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-neutral-900">
-        {restaurant.name}
-      </h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold text-neutral-900">
+          {restaurant.name}
+        </h1>
+        {formatRatingSummary(ratingSummary) && (
+          <span className="text-sm text-neutral-500">
+            {formatRatingSummary(ratingSummary)}
+          </span>
+        )}
+      </div>
       <p className="mt-1 text-neutral-500">{restaurant.address}</p>
       {restaurant.description && (
         <p className="mt-4 text-neutral-700">{restaurant.description}</p>

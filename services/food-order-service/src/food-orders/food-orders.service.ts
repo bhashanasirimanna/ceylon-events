@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { HttpService } from "@nestjs/axios";
@@ -11,6 +12,7 @@ import { firstValueFrom } from "rxjs";
 import { isAxiosError } from "axios";
 import {
   FoodOrderStatus,
+  NotificationType,
   OrderStatus,
   type FoodPreOrderSnapshot,
   type JwtAccessPayload,
@@ -38,10 +40,13 @@ const EDIT_CUTOFF_MINUTES = Number(
 
 @Injectable()
 export class FoodOrdersService {
+  private readonly logger = new Logger(FoodOrdersService.name);
   private readonly orderServiceUrl = process.env.ORDER_SERVICE_URL;
   private readonly eventServiceUrl = process.env.EVENT_SERVICE_URL;
   private readonly restaurantServiceUrl = process.env.RESTAURANT_SERVICE_URL;
   private readonly venueServiceUrl = process.env.VENUE_SERVICE_URL;
+  private readonly notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL;
+  private readonly internalSecret = process.env.INTERNAL_SERVICE_SECRET ?? "";
 
   constructor(
     @InjectRepository(FoodPreOrder)
@@ -362,6 +367,48 @@ export class FoodOrdersService {
     }));
   }
 
+  /**
+   * Fire-and-forget: same reasoning as order-service's equivalent helper —
+   * a notification-service outage must never block the kitchen status
+   * workflow.
+   */
+  private notifyBuyer(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+    metadata: Record<string, unknown>,
+  ): void {
+    if (!this.notificationServiceUrl) return;
+    firstValueFrom(
+      this.httpService.post(
+        `${this.notificationServiceUrl}/internal/notifications`,
+        { userId, type, title, body, metadata },
+        {
+          headers: { "x-internal-secret": this.internalSecret },
+          timeout: HTTP_TIMEOUT_MS,
+        },
+      ),
+    ).catch((error) => {
+      this.logger.warn(
+        `Failed to notify user ${userId} (${type}): ${(error as Error).message}`,
+      );
+    });
+  }
+
+  private notifyIfReady(foodPreOrder: FoodPreOrder): void {
+    if (foodPreOrder.status !== FoodOrderStatus.READY) return;
+    this.notifyBuyer(
+      foodPreOrder.buyerId,
+      NotificationType.FOOD_ORDER_READY,
+      "Your food is ready",
+      foodPreOrder.tableNumber
+        ? `Your food pre-order is ready at table ${foodPreOrder.tableNumber}.`
+        : "Your food pre-order is ready.",
+      { orderItemId: foodPreOrder.orderItemId, eventId: foodPreOrder.eventId },
+    );
+  }
+
   // ---------------------------------------------------------------------
   // Status workflow
   // ---------------------------------------------------------------------
@@ -392,6 +439,7 @@ export class FoodOrdersService {
     const foodPreOrder = await this.getOwnedOrThrow(orderItemId, caller);
     foodPreOrder.status = dto.status;
     await this.foodPreOrdersRepository.save(foodPreOrder);
+    this.notifyIfReady(foodPreOrder);
     const snapshot = await this.withItems(foodPreOrder);
     this.realtimeService.publish(foodPreOrder.eventId, snapshot);
     return snapshot;
@@ -406,6 +454,7 @@ export class FoodOrdersService {
       const foodPreOrder = await this.getOwnedOrThrow(orderItemId, caller);
       foodPreOrder.status = dto.status;
       await this.foodPreOrdersRepository.save(foodPreOrder);
+      this.notifyIfReady(foodPreOrder);
       const snapshot = await this.withItems(foodPreOrder);
       this.realtimeService.publish(foodPreOrder.eventId, snapshot);
       results.push(snapshot);

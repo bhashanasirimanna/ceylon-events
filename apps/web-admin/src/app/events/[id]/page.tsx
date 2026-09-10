@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import type {
   Event,
+  EventReport,
   Offer,
   OfferRedemption,
   PromoCode,
@@ -85,6 +86,9 @@ export default function EventManagePage() {
     Record<string, OfferRedemption[]>
   >({});
 
+  const [report, setReport] = useState<EventReport | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscountType, setPromoDiscountType] = useState<DiscountType>(
@@ -117,6 +121,17 @@ export default function EventManagePage() {
     }
   }, [eventId]);
 
+  const loadReport = useCallback(async () => {
+    try {
+      const result = await apiFetch<EventReport>(`/reports/events/${eventId}`);
+      setReport(result);
+    } catch (err) {
+      setReportError(
+        err instanceof ApiError ? err.message : "Failed to load report",
+      );
+    }
+  }, [eventId]);
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login");
@@ -124,8 +139,9 @@ export default function EventManagePage() {
     }
     if (user) {
       load();
+      loadReport();
     }
-  }, [isLoading, user, router, load]);
+  }, [isLoading, user, router, load, loadReport]);
 
   async function setStatus(status: EventStatus) {
     setStatusActioning(true);
@@ -836,6 +852,114 @@ export default function EventManagePage() {
                 </Button>
               </form>
             </Card>
+
+            <h2 className="mb-3 mt-8 font-medium text-neutral-900">Report</h2>
+            {reportError && (
+              <p className="mb-4 text-sm text-red-600">{reportError}</p>
+            )}
+            {report === null ? (
+              !reportError && (
+                <p className="text-sm text-neutral-500">Loading…</p>
+              )
+            ) : (
+              <Card>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                  <div>
+                    <p className="text-xs text-neutral-500">Tickets sold</p>
+                    <p className="text-lg font-semibold text-neutral-900">
+                      {report.ticketsSold}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Revenue</p>
+                    <p className="text-lg font-semibold text-neutral-900">
+                      {report.currency}{" "}
+                      {(report.revenueMinorUnits / 100).toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-500">Rating</p>
+                    <p className="text-lg font-semibold text-neutral-900">
+                      {report.ratingSummary.average !== null
+                        ? `${report.ratingSummary.average.toFixed(1)} ★`
+                        : "—"}{" "}
+                      <span className="text-xs font-normal text-neutral-500">
+                        ({report.ratingSummary.count})
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 border-t border-neutral-200 pt-4">
+                  <h3 className="mb-2 text-sm font-medium text-neutral-900">
+                    Ticket tier breakdown
+                  </h3>
+                  {report.tierBreakdown.length === 0 ? (
+                    <p className="text-sm text-neutral-500">No sales yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="text-xs text-neutral-500">
+                            <th className="pb-2 font-medium">Tier</th>
+                            <th className="pb-2 font-medium">Sold</th>
+                            <th className="pb-2 font-medium">Revenue</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.tierBreakdown.map((tier) => (
+                            <tr
+                              key={tier.ticketTierId}
+                              className="border-t border-neutral-100"
+                            >
+                              <td className="py-2">{tier.ticketTierName}</td>
+                              <td className="py-2">{tier.sold}</td>
+                              <td className="py-2">
+                                {report.currency}{" "}
+                                {(tier.revenueMinorUnits / 100).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 border-t border-neutral-200 pt-4">
+                  <h3 className="mb-2 text-sm font-medium text-neutral-900">
+                    Food item summary
+                  </h3>
+                  {report.foodItemSummary.length === 0 ? (
+                    <p className="text-sm text-neutral-500">
+                      No food pre-orders yet.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="text-xs text-neutral-500">
+                            <th className="pb-2 font-medium">Item</th>
+                            <th className="pb-2 font-medium">Quantity</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.foodItemSummary.map((item) => (
+                            <tr
+                              key={item.menuItemId}
+                              className="border-t border-neutral-100"
+                            >
+                              <td className="py-2">{item.menuItemName}</td>
+                              <td className="py-2">{item.totalQuantity}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
           </>
         )}
       </main>

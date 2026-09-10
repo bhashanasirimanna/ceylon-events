@@ -40,6 +40,9 @@ jobs:
           - services/checkin-service
           - services/food-order-service
           - services/offers-service
+          - services/ratings-service
+          - services/notification-service
+          - services/reporting-service
           - services/api-gateway
           - apps/web-admin
           - apps/web-user

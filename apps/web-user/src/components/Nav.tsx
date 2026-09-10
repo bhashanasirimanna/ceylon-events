@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@ceylon/design-system";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function Nav() {
   const { user, isLoading, logout } = useAuth();
@@ -24,6 +25,7 @@ export function Nav() {
               <Link href="/orders" className="text-sm text-neutral-700">
                 My orders
               </Link>
+              <NotificationBell />
               <span className="text-sm text-neutral-700">
                 {user.fullName}
               </span>

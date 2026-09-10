@@ -9,8 +9,9 @@ consolidated per-table prep view before doors open.
 Phase 0 (foundations), Phase 1 (restaurant onboarding & menu management),
 Phase 2 (venue seating system), Phase 3 (event & ticketing core),
 Phase 4 (payments), Phase 5 (food pre-order — the platform's core
-differentiator), and Phase 6 (offers & promo codes) are done. See the
-build spec for the full phase plan.
+differentiator), Phase 6 (offers & promo codes), and Phase 7 (ratings,
+notifications & reporting) are done. See the build spec for the full
+phase plan.
 
 Implemented so far:
 
@@ -61,6 +62,24 @@ Implemented so far:
   expiry), added to the Order/Ticketing Service alongside the checkout
   logic it discounts. Orders now carry a subtotal/discount/total
   breakdown instead of a single flat total.
+- **Ratings Service** — one rating per buyer per order per subject (an
+  event, or a menu item the buyer actually pre-ordered on that order),
+  gated on the order being their own, CONFIRMED, and the event having
+  already started. Powers per-event/per-restaurant/per-menu-item rating
+  summaries shown across all three portals.
+- **Notification Service** — an in-app notification inbox per user
+  (order confirmed/cancelled, payment failed, food ready), created via
+  fire-and-forget internal calls from Order, Payment, and Food Order
+  services — a notification-service outage never blocks the order,
+  payment, or kitchen-status flow that triggered it. Live updates via
+  Server-Sent Events, same query-token pattern as the food-order
+  dashboard's stream.
+- **Reporting Service** — a stateless read-only aggregator with no
+  database of its own: composes already-authorized reads from Event,
+  Order, Food Order, and Ratings services (forwarding the caller's own
+  bearer token) into per-event, per-restaurant, and platform-wide
+  reports — tickets sold, revenue, ticket-tier breakdown, food-item
+  prep summary, and rating summary.
 - **API Gateway** — reverse proxy (including correct
   `application/x-www-form-urlencoded` forwarding for PayHere's webhook,
   and a streaming pass-through mode for SSE endpoints so a live
@@ -70,19 +89,24 @@ Implemented so far:
   builder (canvas-based, drag to position, publish versions), event
   creation/publishing and ticket-tier management, payment-proof
   verification queue, offer and promo-code management with redemption
-  stats.
+  stats, a live notification bell, a platform-wide reports dashboard,
+  and per-restaurant/per-event report + ratings-moderation sections.
 - **web-restaurant** — menu management, staff invites, a door check-in
   scanner (manual/scanner-keyboard QR entry, lookup-then-confirm), a
   live food-order dashboard grouped by table with a bulk status workflow
-  and the pre-event prep-quantity summary, and an offer redemption
-  scanner (same QR token as check-in).
+  and the pre-event prep-quantity summary, an offer redemption scanner
+  (same QR token as check-in), and a reports page (restaurant-wide
+  summary plus a per-event drill-down).
 - **web-user** — restaurant discovery, menu preview, event discovery
-  (with bundled offers shown per ticket tier), seated/general-admission
-  checkout flow (seat hold → promo code → review → place order), PayHere
-  redirect checkout or payment-proof upload, order history/cancellation
-  with a subtotal/discount/total breakdown, a QR ticket view once an
-  order is confirmed, and a food pre-order form per ticket (browse the
-  venue's menu, set quantities/notes, edit until the cutoff).
+  (with bundled offers and a rating summary shown per event/restaurant),
+  seated/general-admission checkout flow (seat hold → promo code →
+  review → place order), PayHere redirect checkout or payment-proof
+  upload, order history/cancellation with a subtotal/discount/total
+  breakdown, a QR ticket view once an order is confirmed, a food
+  pre-order form per ticket (browse the venue's menu, set
+  quantities/notes, edit until the cutoff), a live notification bell,
+  and post-event rating forms (the event itself, plus each pre-ordered
+  dish) once an order is confirmed and the event has started.
 - Full Docker Compose stack: Postgres (one database per service),
   Redis, RabbitMQ, MinIO, pgAdmin.
 

@@ -7,7 +7,12 @@ import { Badge, Button, Card } from "@ceylon/design-system";
 import { EventStatus } from "@ceylon/shared-types";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
-import type { Event, PaginatedResult } from "@/lib/types";
+import type {
+  Event,
+  PaginatedResult,
+  RatingSnapshot,
+  RestaurantReport,
+} from "@/lib/types";
 import { Nav } from "@/components/Nav";
 
 const STATUS_TONE: Record<EventStatus, "neutral" | "success" | "danger"> = {
@@ -25,6 +30,13 @@ export default function RestaurantEventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
 
+  const [report, setReport] = useState<RestaurantReport | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+
+  const [ratings, setRatings] = useState<RatingSnapshot[] | null>(null);
+  const [ratingsError, setRatingsError] = useState<string | null>(null);
+  const [deletingRatingId, setDeletingRatingId] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     try {
       const result = await apiFetch<PaginatedResult<Event>>(
@@ -36,6 +48,34 @@ export default function RestaurantEventsPage() {
     }
   }, [restaurantId]);
 
+  const loadReport = useCallback(async () => {
+    try {
+      const result = await apiFetch<RestaurantReport>(
+        `/reports/restaurants/${restaurantId}`,
+      );
+      setReport(result);
+    } catch (err) {
+      setReportError(
+        err instanceof ApiError ? err.message : "Failed to load report",
+      );
+    }
+  }, [restaurantId]);
+
+  const loadRatings = useCallback(async () => {
+    try {
+      const result = await apiFetch<PaginatedResult<RatingSnapshot>>(
+        `/ratings?restaurantId=${restaurantId}`,
+        {},
+        { auth: false },
+      );
+      setRatings(result.items);
+    } catch (err) {
+      setRatingsError(
+        err instanceof ApiError ? err.message : "Failed to load ratings",
+      );
+    }
+  }, [restaurantId]);
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login");
@@ -43,8 +83,28 @@ export default function RestaurantEventsPage() {
     }
     if (user) {
       load();
+      loadReport();
+      loadRatings();
     }
-  }, [isLoading, user, router, load]);
+  }, [isLoading, user, router, load, loadReport, loadRatings]);
+
+  async function deleteRating(id: string) {
+    if (!confirm("Delete this rating?")) return;
+    setDeletingRatingId(id);
+    setRatingsError(null);
+    try {
+      await apiFetch(`/ratings/${id}`, { method: "DELETE" });
+      setRatings((current) =>
+        current ? current.filter((rating) => rating.id !== id) : current,
+      );
+    } catch (err) {
+      setRatingsError(
+        err instanceof ApiError ? err.message : "Failed to delete rating",
+      );
+    } finally {
+      setDeletingRatingId(null);
+    }
+  }
 
   async function setStatus(id: string, status: EventStatus) {
     setActioningId(id);
@@ -135,6 +195,128 @@ export default function RestaurantEventsPage() {
                     </Button>
                   )}
                 </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <h2 className="mb-3 mt-10 font-medium text-neutral-900">Report</h2>
+        {reportError && (
+          <p className="mb-4 text-sm text-red-600">{reportError}</p>
+        )}
+        {report === null ? (
+          !reportError && <p className="text-sm text-neutral-500">Loading…</p>
+        ) : (
+          <Card className="mb-8">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <p className="text-xs text-neutral-500">Events</p>
+                <p className="text-lg font-semibold text-neutral-900">
+                  {report.eventCount}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-neutral-500">Tickets sold</p>
+                <p className="text-lg font-semibold text-neutral-900">
+                  {report.ticketsSold}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-neutral-500">Revenue</p>
+                <p className="text-lg font-semibold text-neutral-900">
+                  {report.currency} {(report.revenueMinorUnits / 100).toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-neutral-500">Rating</p>
+                <p className="text-lg font-semibold text-neutral-900">
+                  {report.ratingSummary.average !== null
+                    ? `${report.ratingSummary.average.toFixed(1)} ★`
+                    : "—"}{" "}
+                  <span className="text-xs font-normal text-neutral-500">
+                    ({report.ratingSummary.count})
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {report.events.length > 0 && (
+              <div className="mt-4 overflow-x-auto border-t border-neutral-200 pt-4">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-xs text-neutral-500">
+                      <th className="pb-2 font-medium">Event</th>
+                      <th className="pb-2 font-medium">Starts</th>
+                      <th className="pb-2 font-medium">Tickets sold</th>
+                      <th className="pb-2 font-medium">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.events.map((ev) => (
+                      <tr key={ev.eventId} className="border-t border-neutral-100">
+                        <td className="py-2">
+                          <Link
+                            href={`/events/${ev.eventId}`}
+                            className="text-brand-600 hover:underline"
+                          >
+                            {ev.eventTitle}
+                          </Link>
+                        </td>
+                        <td className="py-2 text-neutral-500">
+                          {new Date(ev.startsAt).toLocaleString()}
+                        </td>
+                        <td className="py-2">{ev.ticketsSold}</td>
+                        <td className="py-2">
+                          {report.currency} {(ev.revenueMinorUnits / 100).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        )}
+
+        <h2 className="mb-3 font-medium text-neutral-900">Ratings</h2>
+        {ratingsError && (
+          <p className="mb-4 text-sm text-red-600">{ratingsError}</p>
+        )}
+        {ratings === null ? (
+          !ratingsError && <p className="text-sm text-neutral-500">Loading…</p>
+        ) : ratings.length === 0 ? (
+          <p className="text-sm text-neutral-500">No ratings yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {ratings.map((rating) => (
+              <Card
+                key={rating.id}
+                className="flex items-center justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-neutral-900">
+                      {"★".repeat(rating.stars)}
+                      {"☆".repeat(5 - rating.stars)}
+                    </span>
+                    <Badge tone="neutral">{rating.subjectType}</Badge>
+                  </div>
+                  {rating.comment && (
+                    <p className="mt-1 text-sm text-neutral-700">
+                      {rating.comment}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-neutral-400">
+                    {new Date(rating.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <Button
+                  variant="danger"
+                  disabled={deletingRatingId === rating.id}
+                  onClick={() => deleteRating(rating.id)}
+                >
+                  Delete
+                </Button>
               </Card>
             ))}
           </div>

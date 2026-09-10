@@ -36,6 +36,30 @@ export class OrdersController {
     return this.ordersService.findAll(query.page ?? 1, query.pageSize ?? 20);
   }
 
+  // Declared ahead of the generic `:id` route below so "by-event" and
+  // "reports" aren't swallowed as an order id.
+  @Get("by-event/:eventId")
+  @UseGuards(RolesGuard)
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN,
+    UserRole.RESTAURANT_OWNER,
+    UserRole.RESTAURANT_STAFF,
+  )
+  findForEventAsStaff(
+    @Param("eventId") eventId: string,
+    @CurrentUser() caller: JwtAccessPayload,
+  ) {
+    return this.ordersService.findForEventAsStaff(eventId, caller);
+  }
+
+  @Get("reports/platform-totals")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  platformTotals() {
+    return this.ordersService.platformTotals();
+  }
+
   @Get(":id")
   findOne(
     @Param("id") id: string,

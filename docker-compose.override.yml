@@ -116,6 +116,36 @@ services:
       - /workspace/services/offers-service/dist
     command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/offers-service dev"]
 
+  ratings-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
+      - /workspace/services/ratings-service/node_modules
+      - /workspace/services/ratings-service/dist
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/ratings-service dev"]
+
+  notification-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
+      - /workspace/services/notification-service/node_modules
+      - /workspace/services/notification-service/dist
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/notification-service dev"]
+
+  reporting-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
+      - /workspace/services/reporting-service/node_modules
+      - /workspace/services/reporting-service/dist
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/reporting-service dev"]
+
   api-gateway:
     volumes:
       - .:/workspace

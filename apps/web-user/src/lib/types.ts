@@ -2,9 +2,11 @@ import type {
   DietaryTag,
   EventStatus,
   FoodOrderStatus,
+  NotificationType,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  RatingSubjectType,
   RestaurantStatus,
   TicketStatus,
 } from "@ceylon/shared-types";
@@ -213,4 +215,41 @@ export interface FoodPreOrderSnapshot {
   items: FoodPreOrderItemSnapshot[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface NotificationSnapshot {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  metadata: Record<string, unknown> | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface NotificationListResult {
+  items: NotificationSnapshot[];
+  total: number;
+  unreadCount: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface RatingSnapshot {
+  id: string;
+  buyerId: string;
+  orderId: string;
+  eventId: string;
+  restaurantId: string;
+  subjectType: RatingSubjectType;
+  subjectId: string;
+  stars: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+export interface RatingSummary {
+  average: number | null;
+  count: number;
 }

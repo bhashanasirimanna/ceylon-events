@@ -6,7 +6,12 @@ import { useParams } from "next/navigation";
 import { Badge, Button, Card } from "@ceylon/design-system";
 import type { OfferSnapshot } from "@ceylon/shared-types";
 import { apiFetch, ApiError } from "@/lib/api-client";
-import type { EventListing, Restaurant, TicketTier } from "@/lib/types";
+import type {
+  EventListing,
+  RatingSummary,
+  Restaurant,
+  TicketTier,
+} from "@/lib/types";
 
 function discountSummary(offer: OfferSnapshot): string {
   switch (offer.discountType) {
@@ -32,6 +37,14 @@ function formatPrice(tier: TicketTier): string {
   return `${tier.currency} ${(tier.priceMinorUnits / 100).toFixed(2)}`;
 }
 
+function formatRatingSummary(summary: RatingSummary | null): string | null {
+  if (!summary) return null;
+  if (summary.count === 0 || summary.average === null) {
+    return "No ratings yet";
+  }
+  return `★ ${summary.average.toFixed(1)} (${summary.count} rating${summary.count === 1 ? "" : "s"})`;
+}
+
 function saleWindowNote(tier: TicketTier): string | null {
   const now = Date.now();
   if (tier.saleStartAt && new Date(tier.saleStartAt).getTime() > now) {
@@ -51,6 +64,9 @@ export default function EventDetailPage() {
   const [offersByTier, setOffersByTier] = useState<
     Record<string, OfferSnapshot[]>
   >({});
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,6 +85,12 @@ export default function EventDetailPage() {
         ]);
         setRestaurant(r);
         setTiers(t);
+
+        apiFetch<RatingSummary>(
+          `/ratings/summary?subjectType=EVENT&subjectId=${e.id}`,
+        )
+          .then(setRatingSummary)
+          .catch(() => setRatingSummary(null));
 
         const offerEntries = await Promise.all(
           t.map((tier) =>
@@ -107,9 +129,16 @@ export default function EventDetailPage() {
         />
       )}
 
-      <h1 className="text-2xl font-semibold text-neutral-900">
-        {event.title}
-      </h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold text-neutral-900">
+          {event.title}
+        </h1>
+        {formatRatingSummary(ratingSummary) && (
+          <span className="text-sm text-neutral-500">
+            {formatRatingSummary(ratingSummary)}
+          </span>
+        )}
+      </div>
       <p className="mt-1 text-neutral-500">{formatDateTime(event.startsAt)}</p>
 
       {restaurant && (

@@ -21,6 +21,9 @@ export class HealthAggregateController {
       checkin: process.env.CHECKIN_SERVICE_URL,
       foodOrder: process.env.FOOD_ORDER_SERVICE_URL,
       offers: process.env.OFFERS_SERVICE_URL,
+      ratings: process.env.RATINGS_SERVICE_URL,
+      notifications: process.env.NOTIFICATION_SERVICE_URL,
+      reporting: process.env.REPORTING_SERVICE_URL,
     };
 
     const checks = await Promise.allSettled(

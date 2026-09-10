@@ -11,6 +11,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { firstValueFrom } from "rxjs";
 import { isAxiosError } from "axios";
 import {
+  NotificationType,
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
@@ -42,6 +43,7 @@ export class PaymentsService {
   private readonly venueServiceUrl = process.env.VENUE_SERVICE_URL;
   private readonly eventServiceUrl = process.env.EVENT_SERVICE_URL;
   private readonly internalSecret = process.env.INTERNAL_SERVICE_SECRET ?? "";
+  private readonly notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL;
 
   private readonly merchantId = process.env.PAYHERE_MERCHANT_ID ?? "";
   private readonly merchantSecret = process.env.PAYHERE_MERCHANT_SECRET ?? "";
@@ -199,6 +201,34 @@ export class PaymentsService {
     }
   }
 
+  /**
+   * Fire-and-forget: same reasoning as order-service's equivalent helper —
+   * a notification-service outage must never block payment processing.
+   */
+  private notifyBuyer(
+    userId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+    metadata: Record<string, unknown>,
+  ): void {
+    if (!this.notificationServiceUrl) return;
+    firstValueFrom(
+      this.httpService.post(
+        `${this.notificationServiceUrl}/internal/notifications`,
+        { userId, type, title, body, metadata },
+        {
+          headers: { "x-internal-secret": this.internalSecret },
+          timeout: HTTP_TIMEOUT_MS,
+        },
+      ),
+    ).catch((error) => {
+      this.logger.warn(
+        `Failed to notify user ${userId} (${type}): ${(error as Error).message}`,
+      );
+    });
+  }
+
   // ---------------------------------------------------------------------
   // Payment record helpers
   // ---------------------------------------------------------------------
@@ -323,6 +353,13 @@ export class PaymentsService {
     } else if (["-1", "-2", "-3"].includes(dto.status_code)) {
       payment.status = PaymentStatus.REJECTED;
       await this.paymentsRepository.save(payment);
+      this.notifyBuyer(
+        payment.buyerId,
+        NotificationType.PAYMENT_FAILED,
+        "Your payment failed",
+        "Your PayHere payment didn't go through. Please try again from your order.",
+        { orderId: payment.orderId },
+      );
     }
     // status_code "0" (pending) — nothing to do yet.
   }
@@ -440,6 +477,15 @@ export class PaymentsService {
     if (payment) {
       payment.status = PaymentStatus.REJECTED;
       await this.paymentsRepository.save(payment);
+      this.notifyBuyer(
+        payment.buyerId,
+        NotificationType.PAYMENT_FAILED,
+        "Your payment proof was rejected",
+        proof.reviewNotes
+          ? `Your payment proof was rejected: ${proof.reviewNotes}`
+          : "Your payment proof was rejected. Please submit a new one.",
+        { orderId: payment.orderId },
+      );
     }
 
     return { payment: payment!, proof };
