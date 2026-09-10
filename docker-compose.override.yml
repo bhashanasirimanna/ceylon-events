@@ -1,38 +1,70 @@
 # Local dev overrides: bind-mount source for hot reload, run each
 # service/app via its `dev` script instead of the built production entry.
 # Applied automatically alongside docker-compose.yml by `docker compose up`.
+#
+# NestJS services consume @ceylon/shared-types and @ceylon/nest-common as
+# compiled dist/ output (not raw TS), and libs/ is bind-mounted from the
+# host just like everything else — so each service's dev command rebuilds
+# those two libs on container start before starting its own watch mode.
+# This keeps `docker compose up` self-sufficient from a fresh clone with
+# no local Node/pnpm required, and self-heals if dist/ is ever wiped.
+#
+# libs/*/node_modules must NOT come from the host bind mount: pnpm symlinks
+# there can be host-absolute paths (especially on Windows), which don't
+# resolve inside the Linux container. Each service excludes those two dirs
+# via anonymous volumes so it uses the node_modules this image installed
+# for itself, the same reason each service already excludes its own
+# node_modules/dist.
 services:
   identity-service:
     volumes:
       - .:/workspace
       - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
       - /workspace/services/identity-service/node_modules
       - /workspace/services/identity-service/dist
-    command: pnpm --filter @ceylon/identity-service dev
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/identity-service dev"]
 
   restaurant-service:
     volumes:
       - .:/workspace
       - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
       - /workspace/services/restaurant-service/node_modules
       - /workspace/services/restaurant-service/dist
-    command: pnpm --filter @ceylon/restaurant-service dev
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/restaurant-service dev"]
 
   media-service:
     volumes:
       - .:/workspace
       - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
       - /workspace/services/media-service/node_modules
       - /workspace/services/media-service/dist
-    command: pnpm --filter @ceylon/media-service dev
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/media-service dev"]
+
+  venue-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
+      - /workspace/services/venue-service/node_modules
+      - /workspace/services/venue-service/dist
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/venue-service dev"]
 
   api-gateway:
     volumes:
       - .:/workspace
       - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
       - /workspace/services/api-gateway/node_modules
       - /workspace/services/api-gateway/dist
-    command: pnpm --filter @ceylon/api-gateway dev
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/api-gateway dev"]
 
   web-admin:
     volumes:

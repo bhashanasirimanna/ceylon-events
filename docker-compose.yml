@@ -184,6 +184,30 @@ services:
       <<: *node-healthcheck
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
 
+  venue-service:
+    build:
+      context: .
+      dockerfile: ./services/venue-service/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/venue_db
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      REDIS_URL: redis://redis:6379
+      SEAT_HOLD_TTL_SECONDS: ${SEAT_HOLD_TTL_SECONDS}
+    ports:
+      - "${VENUE_SERVICE_PORT}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+
   api-gateway:
     build:
       context: .
@@ -197,12 +221,14 @@ services:
       IDENTITY_SERVICE_URL: http://identity-service:3000
       RESTAURANT_SERVICE_URL: http://restaurant-service:3000
       MEDIA_SERVICE_URL: http://media-service:3000
+      VENUE_SERVICE_URL: http://venue-service:3000
     ports:
       - "${API_GATEWAY_PORT}:3000"
     depends_on:
       - identity-service
       - restaurant-service
       - media-service
+      - venue-service
     healthcheck:
       <<: *node-healthcheck
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]

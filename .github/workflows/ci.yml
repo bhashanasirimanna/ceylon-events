@@ -33,6 +33,7 @@ jobs:
           - services/identity-service
           - services/restaurant-service
           - services/media-service
+          - services/venue-service
           - services/api-gateway
           - apps/web-admin
           - apps/web-user

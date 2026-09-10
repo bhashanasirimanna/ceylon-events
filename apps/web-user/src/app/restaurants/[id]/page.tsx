@@ -1,10 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import type { MenuCategory, Restaurant } from "@/lib/types";
-import { Badge, Card } from "@ceylon/design-system";
+import { Badge, Button, Card } from "@ceylon/design-system";
+
+interface LatestSeatMapVersion {
+  id: string;
+}
 
 export default function RestaurantDetailPage() {
   const params = useParams<{ id: string }>();
@@ -12,6 +17,9 @@ export default function RestaurantDetailPage() {
   const [menu, setMenu] = useState<MenuCategory[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [seatMapVersionId, setSeatMapVersionId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!params.id) return;
@@ -27,6 +35,12 @@ export default function RestaurantDetailPage() {
         setError(err instanceof ApiError ? err.message : "Failed to load restaurant"),
       )
       .finally(() => setIsLoading(false));
+
+    apiFetch<LatestSeatMapVersion>(
+      `/seat-map-versions/by-restaurant/${params.id}/latest`,
+    )
+      .then((version) => setSeatMapVersionId(version.id))
+      .catch(() => setSeatMapVersionId(null));
   }, [params.id]);
 
   if (isLoading) {
@@ -101,6 +115,13 @@ export default function RestaurantDetailPage() {
           Ticketed events hosted here will appear once event booking goes
           live.
         </p>
+        {seatMapVersionId && (
+          <div className="mt-4">
+            <Link href={`/restaurants/${params.id}/seat-picker/${seatMapVersionId}`}>
+              <Button variant="secondary">Preview the seat picker</Button>
+            </Link>
+          </div>
+        )}
       </section>
     </main>
   );

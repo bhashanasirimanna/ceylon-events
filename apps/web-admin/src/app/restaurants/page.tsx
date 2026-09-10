@@ -104,6 +104,9 @@ export default function RestaurantsPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
+                  <Link href={`/restaurants/${restaurant.id}/seat-maps`}>
+                    <Button variant="secondary">Seat maps</Button>
+                  </Link>
                   {restaurant.status === RestaurantStatus.PENDING && (
                     <Button
                       variant="primary"

@@ -18,6 +18,11 @@ const ROUTES: Record<string, string | undefined> = {
   restaurants: process.env.RESTAURANT_SERVICE_URL,
   "menu-items": process.env.RESTAURANT_SERVICE_URL,
   media: process.env.MEDIA_SERVICE_URL,
+  "seat-maps": process.env.VENUE_SERVICE_URL,
+  "seat-map-versions": process.env.VENUE_SERVICE_URL,
+  sections: process.env.VENUE_SERVICE_URL,
+  tables: process.env.VENUE_SERVICE_URL,
+  seats: process.env.VENUE_SERVICE_URL,
 };
 
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);

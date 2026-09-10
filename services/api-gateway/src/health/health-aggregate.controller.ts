@@ -14,6 +14,7 @@ export class HealthAggregateController {
       identity: process.env.IDENTITY_SERVICE_URL,
       restaurant: process.env.RESTAURANT_SERVICE_URL,
       media: process.env.MEDIA_SERVICE_URL,
+      venue: process.env.VENUE_SERVICE_URL,
     };
 
     const checks = await Promise.allSettled(

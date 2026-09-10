@@ -6,8 +6,9 @@ consolidated per-table prep view before doors open.
 
 ## Status
 
-Phase 0 (foundations) + start of Phase 1 (restaurant onboarding & menu
-management). See the build spec for the full phase plan.
+Phase 0 (foundations), Phase 1 (restaurant onboarding & menu management),
+and Phase 2 (venue seating system) are done. See the build spec for the
+full phase plan.
 
 Implemented so far:
 
@@ -16,10 +17,14 @@ Implemented so far:
 - **Restaurant Service** — restaurant onboarding/approval, menu categories
   and items.
 - **Media Service** — presigned upload URLs against MinIO/S3.
+- **Venue/Seating Service** — seat-map authoring (sections/tables/seats),
+  immutable published versions, Redis-backed seat hold-locks with TTL.
 - **API Gateway** — reverse proxy, rate limiting, aggregated health.
-- **web-admin** — restaurant approval queue, restaurant creation.
+- **web-admin** — restaurant approval queue, restaurant creation, seat-map
+  builder (canvas-based, drag to position, publish versions).
 - **web-restaurant** — menu management, staff invites.
-- **web-user** — restaurant discovery + menu preview.
+- **web-user** — restaurant discovery, menu preview, interactive seat-picker
+  preview (hold/release a seat against a published seat map).
 - Full Docker Compose stack: Postgres (one database per service),
   Redis, RabbitMQ, MinIO, pgAdmin.
 
@@ -27,7 +32,9 @@ Implemented so far:
 
 NestJS microservices + Next.js portals in a pnpm/Turborepo monorepo. See
 `libs/` for shared types (`@ceylon/shared-types`), NestJS building blocks
-(`@ceylon/nest-common`), and the UI kit (`@ceylon/design-system`).
+(`@ceylon/nest-common`), the canvas-based seat-map UI kit
+(`@ceylon/seatmap-ui`, built on react-konva), and the general UI kit
+(`@ceylon/design-system`).
 
 ## Running everything
 
@@ -57,6 +64,18 @@ pgAdmin is pre-wired to the shared Postgres instance (see
 and bind-mounts source into each container so edits hot-reload without a
 rebuild. Remove it (or use `-f docker-compose.yml` explicitly) to run the
 production-style build.
+
+## Dev tips
+
+- On Windows hosts, webpack's file watcher (`nest start --watch`) does not
+  always pick up changes made from the host into a bind-mounted container.
+  If edits to a NestJS service don't seem to take effect, run
+  `docker compose restart <service>`.
+- `next build`'s `output: "standalone"` trace-copy step can fail locally on
+  Windows with `EPERM: operation not permitted, symlink` (creating symlinks
+  needs Developer Mode/elevation on Windows). This does not affect the
+  Docker build, which runs inside a Linux container — only a bare
+  `pnpm build` run directly on a Windows host hits it.
 
 ## Local development without Docker (optional)
 

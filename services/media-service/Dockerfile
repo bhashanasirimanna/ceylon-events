@@ -6,7 +6,7 @@ RUN pnpm install --frozen-lockfile=false
 
 FROM base AS dev
 EXPOSE 3000
-CMD ["pnpm", "--filter", "@ceylon/media-service", "dev"]
+CMD ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/media-service dev"]
 
 FROM base AS build
 RUN pnpm --filter @ceylon/media-service... build
