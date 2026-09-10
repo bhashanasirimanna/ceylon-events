@@ -3,7 +3,9 @@ import type {
   EventStatus,
   OrderStatus,
   PaymentMethod,
+  PaymentStatus,
   RestaurantStatus,
+  TicketStatus,
 } from "@ceylon/shared-types";
 
 export interface Restaurant {
@@ -111,4 +113,75 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+}
+
+export interface Payment {
+  id: string;
+  orderId: string;
+  buyerId: string;
+  amountMinorUnits: number;
+  currency: string;
+  method: PaymentMethod;
+  status: PaymentStatus;
+  payherePaymentId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentProof {
+  id: string;
+  paymentId: string;
+  orderId: string;
+  objectKey: string;
+  publicUrl: string;
+  referenceNote: string;
+  status: PaymentStatus;
+  reviewedByUserId: string | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentForOrder {
+  payment: Payment | null;
+  proofs: PaymentProof[];
+}
+
+export interface PayHereCheckoutParams {
+  action: string;
+  merchant_id: string;
+  return_url: string;
+  cancel_url: string;
+  notify_url: string;
+  order_id: string;
+  items: string;
+  currency: string;
+  amount: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  country: string;
+  hash: string;
+}
+
+export interface PresignUploadResponse {
+  uploadUrl: string;
+  publicUrl: string;
+  objectKey: string;
+}
+
+export interface Ticket {
+  id: string;
+  orderItemId: string;
+  eventId: string;
+  ticketTierId: string;
+  seatId: string | null;
+  seatLabel: string | null;
+  status: TicketStatus;
+  checkedInAt: string | null;
+  qrCodeDataUrl: string;
 }

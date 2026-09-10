@@ -175,6 +175,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MEDIA_BUCKET: ${MEDIA_BUCKET}
+      MINIO_PUBLIC_URL: http://localhost:${MINIO_PORT}
     ports:
       - "${MEDIA_SERVICE_PORT}:3000"
     depends_on:
@@ -195,6 +196,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/venue_db
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
       REDIS_URL: redis://redis:6379
       SEAT_HOLD_TTL_SECONDS: ${SEAT_HOLD_TTL_SECONDS}
     ports:
@@ -239,6 +241,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/order_db
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
       EVENT_SERVICE_URL: http://event-service:3000
       VENUE_SERVICE_URL: http://venue-service:3000
     ports:
@@ -249,6 +252,68 @@ services:
       event-service:
         condition: service_healthy
       venue-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: ./services/payment-service/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/payment_db
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET}
+      ORDER_SERVICE_URL: http://order-service:3000
+      VENUE_SERVICE_URL: http://venue-service:3000
+      EVENT_SERVICE_URL: http://event-service:3000
+      PAYHERE_MERCHANT_ID: ${PAYHERE_MERCHANT_ID}
+      PAYHERE_MERCHANT_SECRET: ${PAYHERE_MERCHANT_SECRET}
+      PAYHERE_CHECKOUT_URL: ${PAYHERE_CHECKOUT_URL}
+      PAYHERE_CURRENCY: ${PAYHERE_CURRENCY}
+      WEB_USER_PUBLIC_URL: http://localhost:${WEB_USER_PORT}
+      API_GATEWAY_PUBLIC_URL: http://localhost:${API_GATEWAY_PORT}
+    ports:
+      - "${PAYMENT_SERVICE_PORT}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      venue-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+
+  checkin-service:
+    build:
+      context: .
+      dockerfile: ./services/checkin-service/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/checkin_db
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      ORDER_SERVICE_URL: http://order-service:3000
+      EVENT_SERVICE_URL: http://event-service:3000
+    ports:
+      - "${CHECKIN_SERVICE_PORT}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      event-service:
         condition: service_healthy
     healthcheck:
       <<: *node-healthcheck
@@ -270,6 +335,8 @@ services:
       VENUE_SERVICE_URL: http://venue-service:3000
       EVENT_SERVICE_URL: http://event-service:3000
       ORDER_SERVICE_URL: http://order-service:3000
+      PAYMENT_SERVICE_URL: http://payment-service:3000
+      CHECKIN_SERVICE_URL: http://checkin-service:3000
     ports:
       - "${API_GATEWAY_PORT}:3000"
     depends_on:
@@ -279,6 +346,8 @@ services:
       - venue-service
       - event-service
       - order-service
+      - payment-service
+      - checkin-service
     healthcheck:
       <<: *node-healthcheck
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]

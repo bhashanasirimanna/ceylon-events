@@ -20,6 +20,9 @@ export function Nav() {
             <Link href="/restaurants" className="hover:text-brand-600">
               Restaurants
             </Link>
+            <Link href="/payments/proofs" className="hover:text-brand-600">
+              Payment proofs
+            </Link>
           </nav>
         )}
       </div>

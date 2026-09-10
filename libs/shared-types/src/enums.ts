@@ -61,3 +61,8 @@ export enum RatingSubjectType {
   EVENT = "EVENT",
   MENU_ITEM = "MENU_ITEM",
 }
+
+export enum TicketStatus {
+  ISSUED = "ISSUED",
+  CHECKED_IN = "CHECKED_IN",
+}

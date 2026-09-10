@@ -26,6 +26,8 @@ const ROUTES: Record<string, string | undefined> = {
   events: process.env.EVENT_SERVICE_URL,
   "ticket-tiers": process.env.EVENT_SERVICE_URL,
   orders: process.env.ORDER_SERVICE_URL,
+  payments: process.env.PAYMENT_SERVICE_URL,
+  tickets: process.env.CHECKIN_SERVICE_URL,
 };
 
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
@@ -58,15 +60,33 @@ export class ProxyService {
       headers[key] = Array.isArray(value) ? value.join(",") : value;
     }
 
+    // PayHere's IPN webhook (and any other form-post upstream) sends
+    // application/x-www-form-urlencoded; Express parses that into a plain
+    // object, but axios's default transformer JSON-encodes plain objects
+    // unless the content-type says otherwise. Re-serialize explicitly so
+    // the outgoing request actually matches its own content-type header.
+    const contentType = headers["content-type"] ?? "";
+    let data: unknown = req.body;
+    if (
+      !BODYLESS_METHODS.has(req.method.toUpperCase()) &&
+      contentType.includes("application/x-www-form-urlencoded") &&
+      req.body &&
+      typeof req.body === "object"
+    ) {
+      data = new URLSearchParams(
+        req.body as Record<string, string>,
+      ).toString();
+    } else if (BODYLESS_METHODS.has(req.method.toUpperCase())) {
+      data = undefined;
+    }
+
     try {
       const response = await firstValueFrom(
         this.httpService.request({
           url: targetUrl,
           method: req.method,
           headers,
-          data: BODYLESS_METHODS.has(req.method.toUpperCase())
-            ? undefined
-            : req.body,
+          data,
           timeout: 15000,
           validateStatus: () => true,
         }),

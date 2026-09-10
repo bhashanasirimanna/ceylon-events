@@ -6,3 +6,4 @@ export * from "./common";
 export * from "./venue";
 export * from "./event";
 export * from "./order";
+export * from "./payment";

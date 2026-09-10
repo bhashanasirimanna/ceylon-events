@@ -10,8 +10,7 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { JwtAuthGuard, Roles, RolesGuard } from "@ceylon/nest-common";
-import { UserRole } from "@ceylon/shared-types";
+import { InternalAuthGuard, JwtAuthGuard } from "@ceylon/nest-common";
 import { SeatMapsService } from "../seat-maps/seat-maps.service";
 import { CreateHoldDto } from "./dto/create-hold.dto";
 import { ReleaseHoldDto } from "./dto/release-hold.dto";
@@ -78,12 +77,11 @@ export class SeatMapVersionsController {
     await this.holdsService.releaseHold(versionId, seatId, dto.holderToken);
   }
 
-  // Placeholder for the Order/Ticketing Service (Phase 3) to call once
-  // payment is confirmed. Restricted to platform admins for now since
-  // there's no service-to-service auth yet.
+  // Called by the Payment Service once a payment actually confirms
+  // (Phase 4). Service-to-service only — never called directly by a
+  // buyer's browser.
   @Post("seats/:seatId/mark-sold")
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @UseGuards(InternalAuthGuard)
   async markSold(
     @Param("versionId") versionId: string,
     @Param("seatId") seatId: string,

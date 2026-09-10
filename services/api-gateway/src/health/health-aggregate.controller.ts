@@ -17,6 +17,8 @@ export class HealthAggregateController {
       venue: process.env.VENUE_SERVICE_URL,
       event: process.env.EVENT_SERVICE_URL,
       order: process.env.ORDER_SERVICE_URL,
+      payment: process.env.PAYMENT_SERVICE_URL,
+      checkin: process.env.CHECKIN_SERVICE_URL,
     };
 
     const checks = await Promise.allSettled(

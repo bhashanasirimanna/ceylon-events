@@ -332,6 +332,19 @@ export class OrdersService {
     return this.withItems(order);
   }
 
+  /**
+   * No ownership check — for service-to-service callers only (see
+   * InternalOrdersController), e.g. the Payment Service processing a
+   * PayHere webhook that has no buyer JWT to present.
+   */
+  async findByIdInternal(id: string): Promise<OrderWithItems> {
+    const order = await this.ordersRepository.findOne({ where: { id } });
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+    return this.withItems(order);
+  }
+
   async findAll(
     page: number,
     pageSize: number,
@@ -362,6 +375,30 @@ export class OrdersService {
       throw new BadRequestException("Only pending orders can be cancelled");
     }
     order.status = OrderStatus.CANCELLED;
+    await this.ordersRepository.save(order);
+    return this.withItems(order);
+  }
+
+  /**
+   * Called by the Payment Service once a payment actually confirms.
+   * Collapses PAID -> CONFIRMED into one transition for simplicity (the
+   * distinction matters more once refund/dispute handling exists) and is
+   * idempotent so a retried payment webhook never errors.
+   */
+  async confirmPayment(id: string): Promise<OrderWithItems> {
+    const order = await this.ordersRepository.findOne({ where: { id } });
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+    if (order.status === OrderStatus.CONFIRMED) {
+      return this.withItems(order);
+    }
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Cannot confirm payment for an order in status ${order.status}`,
+      );
+    }
+    order.status = OrderStatus.CONFIRMED;
     await this.ordersRepository.save(order);
     return this.withItems(order);
   }

@@ -7,8 +7,8 @@ consolidated per-table prep view before doors open.
 ## Status
 
 Phase 0 (foundations), Phase 1 (restaurant onboarding & menu management),
-Phase 2 (venue seating system), and Phase 3 (event & ticketing core) are
-done. See the build spec for the full phase plan.
+Phase 2 (venue seating system), Phase 3 (event & ticketing core), and
+Phase 4 (payments) are done. See the build spec for the full phase plan.
 
 Implemented so far:
 
@@ -16,25 +16,50 @@ Implemented so far:
   restaurant-staff invites.
 - **Restaurant Service** — restaurant onboarding/approval, menu categories
   and items.
-- **Media Service** — presigned upload URLs against MinIO/S3.
+- **Media Service** — presigned upload URLs against MinIO/S3 (a separate
+  browser-facing endpoint from the one used for internal calls, since a
+  presigned PUT has to be signed against a host the browser can reach).
 - **Venue/Seating Service** — seat-map authoring (sections/tables/seats),
   immutable published versions, Redis-backed seat hold-locks with TTL.
 - **Event Service** — event CRUD, publish/cancel lifecycle, ticket tiers
   (pricing, sale windows, optional section restrictions, quantity limits).
 - **Order/Ticketing Service** — checkout (pre-payment): validates the
   event/tier/seat-hold against Event and Venue services, snapshots price
-  and seat label, creates a PENDING order. Deliberately does not mark
-  seats permanently sold — that's deferred to the future Payment Service.
-- **API Gateway** — reverse proxy, rate limiting, aggregated health.
+  and seat label, creates a PENDING order.
+- **Payment Service** — PayHere checkout (hash generation, IPN webhook
+  with signature verification, idempotent processing) and a payment-proof
+  upload/admin-approval queue with an audit trail. Either path, once
+  confirmed, orchestrates order confirmation and marks any seated items
+  sold in the Venue/Seating Service via a shared-secret internal-auth
+  guard (`InternalAuthGuard` in `@ceylon/nest-common`) — the first
+  service-to-service-only endpoints in this build.
+- **Check-in Service** — lazily generates one QR-coded ticket per order
+  item the first time a confirmed order's tickets are viewed (idempotent
+  on a DB unique constraint), plus a door-staff lookup/check-in flow
+  scoped to the ticket's own restaurant.
+- **API Gateway** — reverse proxy (including correct
+  `application/x-www-form-urlencoded` forwarding for PayHere's webhook),
+  rate limiting, aggregated health.
 - **web-admin** — restaurant approval queue, restaurant creation, seat-map
   builder (canvas-based, drag to position, publish versions), event
-  creation/publishing and ticket-tier management.
-- **web-restaurant** — menu management, staff invites.
+  creation/publishing and ticket-tier management, payment-proof
+  verification queue.
+- **web-restaurant** — menu management, staff invites, a door check-in
+  scanner (manual/scanner-keyboard QR entry, lookup-then-confirm).
 - **web-user** — restaurant discovery, menu preview, event discovery,
   seated/general-admission checkout flow (seat hold → review → place
-  order), order history and cancellation.
+  order), PayHere redirect checkout or payment-proof upload, order
+  history/cancellation, and a QR ticket view once an order is confirmed.
 - Full Docker Compose stack: Postgres (one database per service),
   Redis, RabbitMQ, MinIO, pgAdmin.
+
+Real end-to-end PayHere IPN delivery needs a publicly reachable
+`notify_url` (a tunnel like ngrok in front of the gateway, or PayHere's
+own sandbox test tools) — not achievable from a purely local Docker Compose
+setup. The webhook signature verification and order-confirmation logic
+are still fully implemented and independently verified by POSTing a
+correctly-signed form body directly (see `payhere.util.ts`'s hash
+functions for how to compute one).
 
 ## Stack
 

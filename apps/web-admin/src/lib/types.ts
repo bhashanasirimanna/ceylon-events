@@ -1,4 +1,9 @@
-import type { UserRole, RestaurantStatus, EventStatus } from "@ceylon/shared-types";
+import type {
+  UserRole,
+  RestaurantStatus,
+  EventStatus,
+  PaymentStatus,
+} from "@ceylon/shared-types";
 
 export interface UserResponse {
   id: string;
@@ -52,6 +57,21 @@ export interface TicketTier {
   saleEndAt: string | null;
   allowedSectionIds: string[] | null;
   quantityLimit: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentProof {
+  id: string;
+  paymentId: string;
+  orderId: string;
+  objectKey: string;
+  publicUrl: string;
+  referenceNote: string;
+  status: PaymentStatus;
+  reviewedByUserId: string | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
   createdAt: string;
   updatedAt: string;
 }

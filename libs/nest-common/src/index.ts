@@ -5,4 +5,5 @@ export * from "./auth/jwt-auth.guard";
 export * from "./auth/roles.decorator";
 export * from "./auth/roles.guard";
 export * from "./auth/current-user.decorator";
+export * from "./auth/internal-auth.guard";
 export * from "./filters/http-exception.filter";

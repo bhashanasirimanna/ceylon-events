@@ -19,6 +19,14 @@ const UPLOAD_URL_TTL_SECONDS = 5 * 60;
 @Injectable()
 export class MediaStorageService {
   private readonly s3: S3Client;
+  // Presigned PUT URLs embed their signing host in the signature itself,
+  // so a browser-side upload has to be signed against a host the browser
+  // can actually reach — not the internal `minio` Docker DNS name, which
+  // only resolves inside the compose network. A second client, signing
+  // against MINIO_PUBLIC_URL (the host-mapped port), handles that; the
+  // original `this.s3` stays on the internal endpoint for server-side
+  // calls (HeadObject/DeleteObject) that never leave the Docker network.
+  private readonly publicS3: S3Client;
   private readonly bucket: string;
   private readonly publicBaseUrl: string;
 
@@ -27,21 +35,28 @@ export class MediaStorageService {
     const port = process.env.MINIO_PORT ?? "9000";
     const useSsl = process.env.MINIO_USE_SSL === "true";
     const scheme = useSsl ? "https" : "http";
+    const credentials = {
+      accessKeyId: process.env.MINIO_ROOT_USER ?? "ceylon",
+      secretAccessKey: process.env.MINIO_ROOT_PASSWORD ?? "",
+    };
 
     this.bucket = process.env.MEDIA_BUCKET ?? "ceylon-media";
-    // NOTE: in production this would be a real S3/CDN public URL, not the
-    // internal minio hostname — fine for local dev where the host also
-    // maps this same port.
-    this.publicBaseUrl = `${scheme}://${endpoint}:${port}/${this.bucket}`;
+    // In production this would be a real S3/CDN public URL; for local dev
+    // it's the host-mapped MinIO port, reachable from the browser.
+    this.publicBaseUrl = `${process.env.MINIO_PUBLIC_URL ?? "http://localhost:9000"}/${this.bucket}`;
 
     this.s3 = new S3Client({
       endpoint: `${scheme}://${endpoint}:${port}`,
       region: "us-east-1",
       forcePathStyle: true,
-      credentials: {
-        accessKeyId: process.env.MINIO_ROOT_USER ?? "ceylon",
-        secretAccessKey: process.env.MINIO_ROOT_PASSWORD ?? "",
-      },
+      credentials,
+    });
+
+    this.publicS3 = new S3Client({
+      endpoint: process.env.MINIO_PUBLIC_URL ?? "http://localhost:9000",
+      region: "us-east-1",
+      forcePathStyle: true,
+      credentials,
     });
   }
 
@@ -57,7 +72,7 @@ export class MediaStorageService {
       Key: objectKey,
       ContentType: params.contentType,
     });
-    const uploadUrl = await getSignedUrl(this.s3, command, {
+    const uploadUrl = await getSignedUrl(this.publicS3, command, {
       expiresIn: UPLOAD_URL_TTL_SECONDS,
     });
 
