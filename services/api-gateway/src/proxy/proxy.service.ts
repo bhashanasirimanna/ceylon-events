@@ -1,0 +1,83 @@
+import { Injectable, Logger } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { firstValueFrom } from "rxjs";
+import type { Request, Response } from "express";
+
+const STRIPPED_REQUEST_HEADERS = new Set(["host", "content-length", "connection"]);
+const STRIPPED_RESPONSE_HEADERS = new Set([
+  "content-length",
+  "transfer-encoding",
+  "connection",
+]);
+
+// Path prefix (first segment after /api/) -> env var carrying the
+// upstream service's base URL. Add an entry here whenever a new service
+// gains a public-facing route.
+const ROUTES: Record<string, string | undefined> = {
+  auth: process.env.IDENTITY_SERVICE_URL,
+  restaurants: process.env.RESTAURANT_SERVICE_URL,
+  "menu-items": process.env.RESTAURANT_SERVICE_URL,
+  media: process.env.MEDIA_SERVICE_URL,
+};
+
+const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
+
+@Injectable()
+export class ProxyService {
+  private readonly logger = new Logger(ProxyService.name);
+
+  constructor(private readonly httpService: HttpService) {}
+
+  async forward(req: Request, res: Response): Promise<void> {
+    const strippedPath = req.originalUrl.replace(/^\/api/, "") || "/";
+    const firstSegment = strippedPath.match(/^\/([^/?]+)/)?.[1];
+    const upstreamBase = firstSegment ? ROUTES[firstSegment] : undefined;
+
+    if (!upstreamBase) {
+      res.status(404).json({
+        statusCode: 404,
+        message: `No upstream route configured for '${strippedPath}'`,
+      });
+      return;
+    }
+
+    const targetUrl = `${upstreamBase}${strippedPath}`;
+    const headers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value === undefined || STRIPPED_REQUEST_HEADERS.has(key.toLowerCase())) {
+        continue;
+      }
+      headers[key] = Array.isArray(value) ? value.join(",") : value;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.request({
+          url: targetUrl,
+          method: req.method,
+          headers,
+          data: BODYLESS_METHODS.has(req.method.toUpperCase())
+            ? undefined
+            : req.body,
+          timeout: 15000,
+          validateStatus: () => true,
+        }),
+      );
+
+      for (const [key, value] of Object.entries(response.headers)) {
+        if (value === undefined || STRIPPED_RESPONSE_HEADERS.has(key.toLowerCase())) {
+          continue;
+        }
+        res.setHeader(key, value as string | string[]);
+      }
+      res.status(response.status).send(response.data);
+    } catch (error) {
+      this.logger.warn(`Upstream request to ${targetUrl} failed: ${(error as Error).message}`);
+      res.status(502).json({
+        statusCode: 502,
+        message: "Upstream service unavailable",
+        error: (error as Error).message,
+      });
+    }
+  }
+}

@@ -1,0 +1,13 @@
+export enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  RESTAURANT_OWNER = "RESTAURANT_OWNER",
+  RESTAURANT_STAFF = "RESTAURANT_STAFF",
+  CUSTOMER = "CUSTOMER",
+}
+
+export const ADMIN_ROLES = [UserRole.SUPER_ADMIN, UserRole.ADMIN] as const;
+export const RESTAURANT_ROLES = [
+  UserRole.RESTAURANT_OWNER,
+  UserRole.RESTAURANT_STAFF,
+] as const;

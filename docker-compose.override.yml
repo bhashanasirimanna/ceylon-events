@@ -1,0 +1,59 @@
+# Local dev overrides: bind-mount source for hot reload, run each
+# service/app via its `dev` script instead of the built production entry.
+# Applied automatically alongside docker-compose.yml by `docker compose up`.
+services:
+  identity-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/services/identity-service/node_modules
+      - /workspace/services/identity-service/dist
+    command: pnpm --filter @ceylon/identity-service dev
+
+  restaurant-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/services/restaurant-service/node_modules
+      - /workspace/services/restaurant-service/dist
+    command: pnpm --filter @ceylon/restaurant-service dev
+
+  media-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/services/media-service/node_modules
+      - /workspace/services/media-service/dist
+    command: pnpm --filter @ceylon/media-service dev
+
+  api-gateway:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/services/api-gateway/node_modules
+      - /workspace/services/api-gateway/dist
+    command: pnpm --filter @ceylon/api-gateway dev
+
+  web-admin:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/apps/web-admin/node_modules
+      - /workspace/apps/web-admin/.next
+    command: pnpm --filter @ceylon/web-admin dev
+
+  web-user:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/apps/web-user/node_modules
+      - /workspace/apps/web-user/.next
+    command: pnpm --filter @ceylon/web-user dev
+
+  web-restaurant:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/apps/web-restaurant/node_modules
+      - /workspace/apps/web-restaurant/.next
+    command: pnpm --filter @ceylon/web-restaurant dev

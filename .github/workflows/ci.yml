@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm test
+
+  docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - services/identity-service
+          - services/restaurant-service
+          - services/media-service
+          - services/api-gateway
+          - apps/web-admin
+          - apps/web-user
+          - apps/web-restaurant
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build ${{ matrix.target }} runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./${{ matrix.target }}/Dockerfile
+          target: runtime
+          push: false
