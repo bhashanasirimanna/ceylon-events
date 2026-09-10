@@ -8,6 +8,21 @@ const STRIPPED_RESPONSE_HEADERS = new Set([
   "content-length",
   "transfer-encoding",
   "connection",
+  // Every domain service calls its own `app.enableCors()` with no
+  // options (wildcard `*`), since in dev they're also reachable directly
+  // on their own host port. Forwarding that verbatim would silently
+  // overwrite the Access-Control-Allow-Origin the gateway's own
+  // `enableCors({ origin: allowedOrigins })` already set earlier in the
+  // middleware chain (Node's setHeader replaces, it doesn't append) —
+  // undoing the gateway's CORS allowlist for every proxied route, which
+  // is effectively all real API traffic. The gateway's own CORS decision
+  // is the one that should reach the browser here.
+  "access-control-allow-origin",
+  "access-control-allow-credentials",
+  "access-control-allow-methods",
+  "access-control-allow-headers",
+  "access-control-expose-headers",
+  "access-control-max-age",
 ]);
 
 // Path prefix (first segment after /api/) -> env var carrying the

@@ -7,3 +7,4 @@ export * from "./auth/roles.guard";
 export * from "./auth/current-user.decorator";
 export * from "./auth/internal-auth.guard";
 export * from "./filters/http-exception.filter";
+export * from "./config/require-env";

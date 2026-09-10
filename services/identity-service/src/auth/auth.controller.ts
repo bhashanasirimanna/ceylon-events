@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { JwtAuthGuard, Roles, RolesGuard, CurrentUser } from "@ceylon/nest-common";
 import { UserRole, type JwtAccessPayload } from "@ceylon/shared-types";
 import { AuthService } from "./auth.service";
@@ -25,7 +26,12 @@ export class AuthController {
     private readonly usersService: UsersService,
   ) {}
 
+  // Tighter than this service's default 120/min: these three endpoints are
+  // exactly what a credential-stuffing or brute-force attempt would hit,
+  // so they get their own stricter per-IP limit regardless of the
+  // gateway's own throttling in front of them.
   @Post("register")
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async register(@Body() dto: RegisterDto) {
     const { user, tokens } = await this.authService.register(dto);
     return { user: toUserResponse(user), tokens };
@@ -33,6 +39,7 @@ export class AuthController {
 
   @Post("login")
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async login(@Body() dto: LoginDto) {
     const { user, tokens } = await this.authService.login(dto);
     return { user: toUserResponse(user), tokens };
@@ -40,6 +47,7 @@ export class AuthController {
 
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   async refresh(@Body() dto: RefreshDto) {
     const tokens = await this.authService.refresh(dto.refreshToken);
     return { tokens };

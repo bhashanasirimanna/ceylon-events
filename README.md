@@ -9,9 +9,9 @@ consolidated per-table prep view before doors open.
 Phase 0 (foundations), Phase 1 (restaurant onboarding & menu management),
 Phase 2 (venue seating system), Phase 3 (event & ticketing core),
 Phase 4 (payments), Phase 5 (food pre-order — the platform's core
-differentiator), Phase 6 (offers & promo codes), and Phase 7 (ratings,
-notifications & reporting) are done. See the build spec for the full
-phase plan.
+differentiator), Phase 6 (offers & promo codes), Phase 7 (ratings,
+notifications & reporting), and Phase 8 (hardening & deployment prep)
+are done. See the build spec for the full phase plan.
 
 Implemented so far:
 
@@ -110,6 +110,30 @@ Implemented so far:
 - Full Docker Compose stack: Postgres (one database per service),
   Redis, RabbitMQ, MinIO, pgAdmin.
 
+**Hardening (Phase 8):**
+- Every backend service fails fast at startup with a clear error if a
+  required environment variable is missing (`requireEnv()` in
+  `@ceylon/nest-common`), instead of limping into a confusing downstream
+  failure (e.g. TypeORM's opaque connection error when `DATABASE_URL` is
+  undefined) — a Payment Service started without its PayHere merchant
+  secret, for instance, refuses to start rather than silently issuing
+  invalid checkout hashes.
+- Every backend service calls `app.enableShutdownHooks()` so container
+  orchestration's SIGTERM closes database/Redis/HTTP connections cleanly
+  instead of killing the process mid-request.
+- The API Gateway — the one publicly-exposed service — now sets security
+  headers via `helmet` and restricts CORS to an explicit origin allowlist
+  (`CORS_ALLOWED_ORIGINS`, defaulting to the three web portals' local-dev
+  origins) instead of accepting any origin.
+- Identity Service's `login`/`register`/`refresh` endpoints carry their
+  own stricter per-IP rate limit (on top of the Gateway's own limit and
+  this service's default), since those are exactly the endpoints a
+  credential-stuffing or brute-force attempt would target.
+- `payhere.util.ts`'s hash/signature functions (Payment Service) now have
+  real unit tests with known-good MD5 vectors, replacing the vacuous
+  `jest --passWithNoTests` every service still runs otherwise — see
+  [Testing](#testing) below for what that does and doesn't cover.
+
 Real end-to-end PayHere IPN delivery needs a publicly reachable
 `notify_url` (a tunnel like ngrok in front of the gateway, or PayHere's
 own sandbox test tools) — not achievable from a purely local Docker Compose
@@ -194,3 +218,60 @@ container per service — cheaper locally while still enforcing that each
 service only ever connects to its own database. Production deploys can
 split these onto separate managed Postgres instances without any code
 changes (each service only knows its own `DATABASE_URL`).
+
+## Testing
+
+`pnpm test` runs every service's Jest suite. Only Payment Service has
+real tests right now — `payhere.util.spec.ts` verifies the checkout-hash
+and IPN-signature functions against known-good MD5 vectors, including
+that tampering with the amount, status code, or merchant secret changes
+the result. Every other service's `test` script is still
+`jest --passWithNoTests`, i.e. it passes vacuously with zero assertions.
+This build has been verified throughout by extensive manual curl-based
+smoke testing against the live Docker stack after every phase (see each
+phase's commit message for what was exercised), not by an automated
+test suite — a real automated test suite covering the domain logic in
+each service (order pricing/promo-code math, seat-hold/availability
+checks, offer redemption caps, rating eligibility, etc.) is the most
+valuable next investment for this codebase, beyond what this phase
+covered.
+
+## Production deployment notes
+
+This build's Docker Compose setup is tuned for local development.
+Deploying it for real needs at least:
+
+- **Database migrations.** Every service runs TypeORM with
+  `synchronize: true` in non-production `NODE_ENV`, and this repo has no
+  migration files — schema changes throughout this whole build have
+  applied directly via `synchronize`. Setting `NODE_ENV=production`
+  turns `synchronize` off (see each service's `app.module.ts`), so a
+  real production rollout needs either a one-time `synchronize` bootstrap
+  against a fresh database before flipping `NODE_ENV`, or (better,
+  before any real schema changes are needed) generating actual TypeORM
+  migrations from the current entities and wiring a migration-run step
+  into deployment. This is the single biggest gap between this build and
+  a real production rollout.
+- **Secrets.** Every credential in `.env.example` (`JWT_ACCESS_SECRET`,
+  `JWT_REFRESH_SECRET`, `INTERNAL_SERVICE_SECRET`, Postgres/MinIO/
+  RabbitMQ/pgAdmin passwords) is a dev-only placeholder — rotate all of
+  them to real secrets, sourced from a secrets manager rather than a
+  committed `.env` file.
+- **CORS.** Set `CORS_ALLOWED_ORIGINS` on the API Gateway to the real
+  deployed web portal origins (it defaults to the three local-dev ports).
+- **TLS.** The API Gateway speaks plain HTTP; put a reverse proxy or load
+  balancer in front of it to terminate TLS — none of this build's
+  services do so themselves.
+- **PayHere.** Replace the sandbox merchant ID/secret/checkout URL with
+  live credentials, and `API_GATEWAY_PUBLIC_URL` needs to be a publicly
+  reachable HTTPS URL for PayHere's IPN webhook to reach.
+- **Horizontal scaling caveats**, already noted inline in the relevant
+  code: Food Order Service's and Notification Service's SSE live-update
+  streams are in-memory pub/sub scoped to a single replica — scaling
+  either horizontally needs that backed by Redis pub/sub (already
+  running in this stack for seat holds) instead. General-admission
+  ticket-tier quantity limits and promo-code usage-count increments are
+  both best-effort checks, not perfectly race-safe under concurrent
+  requests for the same tier/code — a real reservation/lock (like the
+  seat holds already have) would be needed to close that gap under real
+  concurrent load.

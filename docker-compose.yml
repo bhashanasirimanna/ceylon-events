@@ -493,6 +493,7 @@ services:
       RATINGS_SERVICE_URL: http://ratings-service:3000
       NOTIFICATION_SERVICE_URL: http://notification-service:3000
       REPORTING_SERVICE_URL: http://reporting-service:3000
+      CORS_ALLOWED_ORIGINS: http://localhost:${WEB_ADMIN_PORT},http://localhost:${WEB_USER_PORT},http://localhost:${WEB_RESTAURANT_PORT}
     ports:
       - "${API_GATEWAY_PORT}:3000"
     depends_on:
