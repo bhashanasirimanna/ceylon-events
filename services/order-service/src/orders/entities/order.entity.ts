@@ -28,8 +28,23 @@ export class Order {
   })
   status: OrderStatus;
 
+  // Sum of the order items' priceMinorUnits before any promo-code
+  // discount is applied. Defaults to 0 purely so adding this column to an
+  // already-populated table doesn't require a backfill migration —
+  // every order created after this column existed always sets it
+  // explicitly.
+  @Column({ name: "subtotal_minor_units", type: "int", default: 0 })
+  subtotalMinorUnits: number;
+
+  @Column({ name: "discount_minor_units", type: "int", default: 0 })
+  discountMinorUnits: number;
+
+  // subtotalMinorUnits - discountMinorUnits. What the buyer actually owes.
   @Column({ name: "total_minor_units", type: "int" })
   totalMinorUnits: number;
+
+  @Column({ name: "promo_code_id", type: "uuid", nullable: true })
+  promoCodeId: string | null;
 
   @Column({ default: "LKR" })
   currency: string;

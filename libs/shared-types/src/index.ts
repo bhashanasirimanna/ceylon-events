@@ -8,3 +8,5 @@ export * from "./event";
 export * from "./order";
 export * from "./payment";
 export * from "./food-order";
+export * from "./offer";
+export * from "./promo-code";

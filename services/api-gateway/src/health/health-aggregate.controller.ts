@@ -20,6 +20,7 @@ export class HealthAggregateController {
       payment: process.env.PAYMENT_SERVICE_URL,
       checkin: process.env.CHECKIN_SERVICE_URL,
       foodOrder: process.env.FOOD_ORDER_SERVICE_URL,
+      offers: process.env.OFFERS_SERVICE_URL,
     };
 
     const checks = await Promise.allSettled(

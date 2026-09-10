@@ -26,9 +26,11 @@ const ROUTES: Record<string, string | undefined> = {
   events: process.env.EVENT_SERVICE_URL,
   "ticket-tiers": process.env.EVENT_SERVICE_URL,
   orders: process.env.ORDER_SERVICE_URL,
+  "promo-codes": process.env.ORDER_SERVICE_URL,
   payments: process.env.PAYMENT_SERVICE_URL,
   tickets: process.env.CHECKIN_SERVICE_URL,
   "food-pre-orders": process.env.FOOD_ORDER_SERVICE_URL,
+  offers: process.env.OFFERS_SERVICE_URL,
 };
 
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);

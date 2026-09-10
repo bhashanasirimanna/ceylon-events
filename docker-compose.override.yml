@@ -106,6 +106,16 @@ services:
       - /workspace/services/food-order-service/dist
     command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/food-order-service dev"]
 
+  offers-service:
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/libs/shared-types/node_modules
+      - /workspace/libs/nest-common/node_modules
+      - /workspace/services/offers-service/node_modules
+      - /workspace/services/offers-service/dist
+    command: ["sh", "-c", "pnpm --filter @ceylon/shared-types build && pnpm --filter @ceylon/nest-common build && pnpm --filter @ceylon/offers-service dev"]
+
   api-gateway:
     volumes:
       - .:/workspace

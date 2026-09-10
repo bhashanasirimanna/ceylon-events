@@ -33,6 +33,7 @@ export interface TicketWithQr {
 
 export interface TicketLookupResult {
   id: string;
+  orderItemId: string;
   eventTitle: string;
   ticketTierId: string;
   seatLabel: string | null;
@@ -199,6 +200,7 @@ export class TicketsService {
   ): TicketLookupResult {
     return {
       id: ticket.id,
+      orderItemId: ticket.orderItemId,
       eventTitle: event.title,
       ticketTierId: ticket.ticketTierId,
       seatLabel: ticket.seatLabel,

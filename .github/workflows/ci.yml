@@ -39,6 +39,7 @@ jobs:
           - services/payment-service
           - services/checkin-service
           - services/food-order-service
+          - services/offers-service
           - services/api-gateway
           - apps/web-admin
           - apps/web-user

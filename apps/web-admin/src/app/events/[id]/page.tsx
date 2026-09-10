@@ -4,11 +4,30 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Badge, Button, Card } from "@ceylon/design-system";
-import { EventStatus } from "@ceylon/shared-types";
+import { DiscountType, EventStatus, RedemptionType } from "@ceylon/shared-types";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
-import type { Event, TicketTier } from "@/lib/types";
+import type {
+  Event,
+  Offer,
+  OfferRedemption,
+  PromoCode,
+  TicketTier,
+} from "@/lib/types";
 import { Nav } from "@/components/Nav";
+
+function formatDiscount(discountType: DiscountType, discountValue: number): string {
+  if (discountType === DiscountType.PERCENTAGE) return `${discountValue}% off`;
+  if (discountType === DiscountType.FIXED)
+    return `Fixed ${(discountValue / 100).toFixed(2)} off`;
+  return "Free item";
+}
+
+function formatRedemption(offer: Offer): string {
+  if (offer.redemptionType === RedemptionType.UNLIMITED) return "Unlimited";
+  if (offer.redemptionType === RedemptionType.SINGLE_USE) return "Single use";
+  return `Up to ${offer.redemptionCap} uses`;
+}
 
 const STATUS_TONE: Record<EventStatus, "neutral" | "success" | "danger"> = {
   [EventStatus.DRAFT]: "neutral",
@@ -49,14 +68,47 @@ export default function EventManagePage() {
   const [tierQuantityLimit, setTierQuantityLimit] = useState("");
   const [creatingTier, setCreatingTier] = useState(false);
 
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [offerName, setOfferName] = useState("");
+  const [offerDescription, setOfferDescription] = useState("");
+  const [offerDiscountType, setOfferDiscountType] = useState<DiscountType>(
+    DiscountType.PERCENTAGE,
+  );
+  const [offerDiscountValue, setOfferDiscountValue] = useState("");
+  const [offerRedemptionType, setOfferRedemptionType] = useState<RedemptionType>(
+    RedemptionType.UNLIMITED,
+  );
+  const [offerRedemptionCap, setOfferRedemptionCap] = useState("");
+  const [offerTierIds, setOfferTierIds] = useState<string[]>([]);
+  const [creatingOffer, setCreatingOffer] = useState(false);
+  const [offerRedemptions, setOfferRedemptions] = useState<
+    Record<string, OfferRedemption[]>
+  >({});
+
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscountType, setPromoDiscountType] = useState<DiscountType>(
+    DiscountType.PERCENTAGE,
+  );
+  const [promoDiscountValue, setPromoDiscountValue] = useState("");
+  const [promoTierId, setPromoTierId] = useState("");
+  const [promoUsageLimit, setPromoUsageLimit] = useState("");
+  const [promoExpiresAt, setPromoExpiresAt] = useState("");
+  const [creatingPromo, setCreatingPromo] = useState(false);
+
   const load = useCallback(async () => {
     try {
-      const [eventResult, tiersResult] = await Promise.all([
-        apiFetch<Event>(`/events/${eventId}`),
-        apiFetch<TicketTier[]>(`/events/${eventId}/ticket-tiers`),
-      ]);
+      const [eventResult, tiersResult, offersResult, promoCodesResult] =
+        await Promise.all([
+          apiFetch<Event>(`/events/${eventId}`),
+          apiFetch<TicketTier[]>(`/events/${eventId}/ticket-tiers`),
+          apiFetch<Offer[]>(`/offers?eventId=${eventId}`),
+          apiFetch<PromoCode[]>(`/promo-codes?eventId=${eventId}`),
+        ]);
       setEvent(eventResult);
       setTiers(tiersResult);
+      setOffers(offersResult);
+      setPromoCodes(promoCodesResult);
       setEditTitle(eventResult.title);
       setEditDescription(eventResult.description ?? "");
       setEditStartsAt(toDateTimeLocal(eventResult.startsAt));
@@ -152,6 +204,133 @@ export default function EventManagePage() {
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to delete ticket tier");
+    }
+  }
+
+  function toggleOfferTier(tierId: string) {
+    setOfferTierIds((current) =>
+      current.includes(tierId)
+        ? current.filter((id) => id !== tierId)
+        : [...current, tierId],
+    );
+  }
+
+  async function createOffer(e: React.FormEvent) {
+    e.preventDefault();
+    if (offerTierIds.length === 0) {
+      setError("Select at least one ticket tier for this offer");
+      return;
+    }
+    setCreatingOffer(true);
+    setError(null);
+    try {
+      await apiFetch("/offers", {
+        method: "POST",
+        body: JSON.stringify({
+          eventId,
+          name: offerName,
+          description: offerDescription || undefined,
+          discountType: offerDiscountType,
+          discountValue:
+            offerDiscountType === DiscountType.FIXED
+              ? Math.round(Number(offerDiscountValue) * 100)
+              : Number(offerDiscountValue) || 0,
+          redemptionType: offerRedemptionType,
+          redemptionCap:
+            offerRedemptionType === RedemptionType.CAPPED
+              ? Number(offerRedemptionCap)
+              : undefined,
+          ticketTierIds: offerTierIds,
+        }),
+      });
+      setOfferName("");
+      setOfferDescription("");
+      setOfferDiscountValue("");
+      setOfferRedemptionCap("");
+      setOfferTierIds([]);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to create offer");
+    } finally {
+      setCreatingOffer(false);
+    }
+  }
+
+  async function deleteOffer(id: string) {
+    if (!confirm("Delete this offer?")) return;
+    setError(null);
+    try {
+      await apiFetch(`/offers/${id}`, { method: "DELETE" });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete offer");
+    }
+  }
+
+  async function loadRedemptions(offerId: string) {
+    if (offerRedemptions[offerId]) {
+      setOfferRedemptions((current) => {
+        const next = { ...current };
+        delete next[offerId];
+        return next;
+      });
+      return;
+    }
+    try {
+      const redemptions = await apiFetch<OfferRedemption[]>(
+        `/offers/${offerId}/redemptions`,
+      );
+      setOfferRedemptions((current) => ({ ...current, [offerId]: redemptions }));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to load redemptions");
+    }
+  }
+
+  async function createPromoCode(e: React.FormEvent) {
+    e.preventDefault();
+    setCreatingPromo(true);
+    setError(null);
+    try {
+      await apiFetch("/promo-codes", {
+        method: "POST",
+        body: JSON.stringify({
+          eventId,
+          code: promoCode,
+          discountType: promoDiscountType,
+          discountValue:
+            promoDiscountType === DiscountType.FIXED
+              ? Math.round(Number(promoDiscountValue) * 100)
+              : Number(promoDiscountValue) || 0,
+          applicableTicketTierId: promoTierId || undefined,
+          usageLimit: promoUsageLimit ? Number(promoUsageLimit) : undefined,
+          expiresAt: promoExpiresAt
+            ? new Date(promoExpiresAt).toISOString()
+            : undefined,
+        }),
+      });
+      setPromoCode("");
+      setPromoDiscountValue("");
+      setPromoTierId("");
+      setPromoUsageLimit("");
+      setPromoExpiresAt("");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to create promo code");
+    } finally {
+      setCreatingPromo(false);
+    }
+  }
+
+  async function togglePromoActive(promo: PromoCode) {
+    setError(null);
+    try {
+      await apiFetch(`/promo-codes/${promo.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: !promo.isActive }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update promo code");
     }
   }
 
@@ -374,6 +553,286 @@ export default function EventManagePage() {
                 />
                 <Button type="submit" disabled={creatingTier}>
                   {creatingTier ? "Adding…" : "Add ticket tier"}
+                </Button>
+              </form>
+            </Card>
+
+            <h2 className="mb-3 mt-8 font-medium text-neutral-900">Offers</h2>
+
+            <div className="mb-6 flex flex-col gap-3">
+              {offers.length === 0 && (
+                <p className="text-sm text-neutral-500">No offers yet.</p>
+              )}
+              {offers.map((offer) => (
+                <Card key={offer.id}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-neutral-900">
+                          {offer.name}
+                        </h3>
+                        <Badge tone="success">
+                          {formatDiscount(offer.discountType, offer.discountValue)}
+                        </Badge>
+                        <Badge tone="neutral">{formatRedemption(offer)}</Badge>
+                      </div>
+                      {offer.description && (
+                        <p className="text-sm text-neutral-500">
+                          {offer.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-neutral-400">
+                        Tiers:{" "}
+                        {offer.ticketTierIds
+                          .map(
+                            (tid) => tiers.find((t) => t.id === tid)?.name ?? tid,
+                          )
+                          .join(", ")}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => loadRedemptions(offer.id)}
+                      >
+                        {offerRedemptions[offer.id] ? "Hide" : "View"} redemptions
+                      </Button>
+                      <Button variant="danger" onClick={() => deleteOffer(offer.id)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                  {offerRedemptions[offer.id] && (
+                    <div className="mt-3 border-t border-neutral-200 pt-3 text-sm text-neutral-600">
+                      {offerRedemptions[offer.id].length === 0 ? (
+                        <p>No redemptions yet.</p>
+                      ) : (
+                        <p>
+                          {offerRedemptions[offer.id].length} redemption(s) —
+                          most recent{" "}
+                          {new Date(
+                            offerRedemptions[offer.id][0].redeemedAt,
+                          ).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            <Card className="mb-8">
+              <h3 className="mb-3 font-medium text-neutral-900">+ Add offer</h3>
+              <form onSubmit={createOffer} className="flex flex-col gap-3">
+                <input
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  placeholder="Name (e.g. Unlimited Beer)"
+                  value={offerName}
+                  onChange={(e) => setOfferName(e.target.value)}
+                  required
+                />
+                <textarea
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  rows={2}
+                  placeholder="Description (optional)"
+                  value={offerDescription}
+                  onChange={(e) => setOfferDescription(e.target.value)}
+                />
+                <div className="flex gap-3">
+                  <select
+                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    value={offerDiscountType}
+                    onChange={(e) =>
+                      setOfferDiscountType(e.target.value as DiscountType)
+                    }
+                  >
+                    <option value={DiscountType.PERCENTAGE}>Percentage</option>
+                    <option value={DiscountType.FIXED}>Fixed amount</option>
+                    <option value={DiscountType.FREE_ITEM}>Free item</option>
+                  </select>
+                  {offerDiscountType !== DiscountType.FREE_ITEM && (
+                    <input
+                      type="number"
+                      step={offerDiscountType === DiscountType.FIXED ? "0.01" : "1"}
+                      min="0"
+                      className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      placeholder={
+                        offerDiscountType === DiscountType.PERCENTAGE
+                          ? "% off"
+                          : "Amount off"
+                      }
+                      value={offerDiscountValue}
+                      onChange={(e) => setOfferDiscountValue(e.target.value)}
+                      required
+                    />
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <select
+                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    value={offerRedemptionType}
+                    onChange={(e) =>
+                      setOfferRedemptionType(e.target.value as RedemptionType)
+                    }
+                  >
+                    <option value={RedemptionType.UNLIMITED}>Unlimited</option>
+                    <option value={RedemptionType.CAPPED}>Capped</option>
+                    <option value={RedemptionType.SINGLE_USE}>Single use</option>
+                  </select>
+                  {offerRedemptionType === RedemptionType.CAPPED && (
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      placeholder="Max uses per ticket"
+                      value={offerRedemptionCap}
+                      onChange={(e) => setOfferRedemptionCap(e.target.value)}
+                      required
+                    />
+                  )}
+                </div>
+                <div>
+                  <p className="mb-1 text-xs text-neutral-500">
+                    Applies to ticket tiers:
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    {tiers.map((tier) => (
+                      <label
+                        key={tier.id}
+                        className="flex items-center gap-1 text-sm text-neutral-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={offerTierIds.includes(tier.id)}
+                          onChange={() => toggleOfferTier(tier.id)}
+                        />
+                        {tier.name}
+                      </label>
+                    ))}
+                    {tiers.length === 0 && (
+                      <p className="text-sm text-neutral-400">
+                        Add a ticket tier first.
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Button type="submit" disabled={creatingOffer}>
+                  {creatingOffer ? "Adding…" : "Add offer"}
+                </Button>
+              </form>
+            </Card>
+
+            <h2 className="mb-3 font-medium text-neutral-900">Promo codes</h2>
+
+            <div className="mb-6 flex flex-col gap-3">
+              {promoCodes.length === 0 && (
+                <p className="text-sm text-neutral-500">No promo codes yet.</p>
+              )}
+              {promoCodes.map((promo) => (
+                <Card
+                  key={promo.id}
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-mono font-medium text-neutral-900">
+                        {promo.code}
+                      </h3>
+                      <Badge tone={promo.isActive ? "success" : "danger"}>
+                        {promo.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-neutral-500">
+                      {formatDiscount(promo.discountType, promo.discountValue)}
+                      {promo.applicableTicketTierId
+                        ? ` · ${
+                            tiers.find((t) => t.id === promo.applicableTicketTierId)
+                              ?.name ?? "one tier"
+                          } only`
+                        : " · order-wide"}
+                    </p>
+                    <p className="text-xs text-neutral-400">
+                      Used {promo.usageCount}
+                      {promo.usageLimit !== null ? ` / ${promo.usageLimit}` : ""}
+                      {promo.expiresAt &&
+                        ` · expires ${new Date(promo.expiresAt).toLocaleString()}`}
+                    </p>
+                  </div>
+                  <Button variant="secondary" onClick={() => togglePromoActive(promo)}>
+                    {promo.isActive ? "Deactivate" : "Activate"}
+                  </Button>
+                </Card>
+              ))}
+            </div>
+
+            <Card>
+              <h3 className="mb-3 font-medium text-neutral-900">
+                + Add promo code
+              </h3>
+              <form onSubmit={createPromoCode} className="flex flex-col gap-3">
+                <input
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm uppercase"
+                  placeholder="Code (e.g. EARLY20)"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  required
+                />
+                <div className="flex gap-3">
+                  <select
+                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    value={promoDiscountType}
+                    onChange={(e) =>
+                      setPromoDiscountType(e.target.value as DiscountType)
+                    }
+                  >
+                    <option value={DiscountType.PERCENTAGE}>Percentage</option>
+                    <option value={DiscountType.FIXED}>Fixed amount</option>
+                  </select>
+                  <input
+                    type="number"
+                    step={promoDiscountType === DiscountType.FIXED ? "0.01" : "1"}
+                    min="0"
+                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    placeholder={
+                      promoDiscountType === DiscountType.PERCENTAGE
+                        ? "% off"
+                        : "Amount off"
+                    }
+                    value={promoDiscountValue}
+                    onChange={(e) => setPromoDiscountValue(e.target.value)}
+                    required
+                  />
+                </div>
+                <select
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  value={promoTierId}
+                  onChange={(e) => setPromoTierId(e.target.value)}
+                >
+                  <option value="">Order-wide</option>
+                  {tiers.map((tier) => (
+                    <option key={tier.id} value={tier.id}>
+                      {tier.name} only
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    placeholder="Usage limit (optional)"
+                    value={promoUsageLimit}
+                    onChange={(e) => setPromoUsageLimit(e.target.value)}
+                  />
+                  <input
+                    type="datetime-local"
+                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    value={promoExpiresAt}
+                    onChange={(e) => setPromoExpiresAt(e.target.value)}
+                  />
+                </div>
+                <Button type="submit" disabled={creatingPromo}>
+                  {creatingPromo ? "Adding…" : "Add promo code"}
                 </Button>
               </form>
             </Card>

@@ -2,8 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthCommonModule, HealthModule } from "@ceylon/nest-common";
-import { OrdersModule } from "./orders/orders.module";
-import { PromoCodesModule } from "./promo-codes/promo-codes.module";
+import { OffersModule } from "./offers/offers.module";
 
 @Module({
   imports: [
@@ -18,8 +17,7 @@ import { PromoCodesModule } from "./promo-codes/promo-codes.module";
       process.env.JWT_ACCESS_SECRET ?? "dev_access_secret_change_me",
     ),
     HealthModule,
-    OrdersModule,
-    PromoCodesModule,
+    OffersModule,
   ],
 })
 export class AppModule {}

@@ -4,8 +4,22 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Badge, Button, Card } from "@ceylon/design-system";
+import type { OfferSnapshot } from "@ceylon/shared-types";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import type { EventListing, Restaurant, TicketTier } from "@/lib/types";
+
+function discountSummary(offer: OfferSnapshot): string {
+  switch (offer.discountType) {
+    case "PERCENTAGE":
+      return `${offer.discountValue}% off`;
+    case "FIXED":
+      return `${(offer.discountValue / 100).toFixed(2)} off`;
+    case "FREE_ITEM":
+      return "Free item";
+    default:
+      return "";
+  }
+}
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -34,6 +48,9 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<EventListing | null>(null);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [tiers, setTiers] = useState<TicketTier[]>([]);
+  const [offersByTier, setOffersByTier] = useState<
+    Record<string, OfferSnapshot[]>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,6 +69,15 @@ export default function EventDetailPage() {
         ]);
         setRestaurant(r);
         setTiers(t);
+
+        const offerEntries = await Promise.all(
+          t.map((tier) =>
+            apiFetch<OfferSnapshot[]>(`/offers/by-ticket-tier/${tier.id}`)
+              .then((offers) => [tier.id, offers] as const)
+              .catch(() => [tier.id, []] as const),
+          ),
+        );
+        setOffersByTier(Object.fromEntries(offerEntries));
       })
       .catch((err: unknown) =>
         setError(err instanceof ApiError ? err.message : "Failed to load event"),
@@ -115,25 +141,43 @@ export default function EventDetailPage() {
         <div className="mt-4 space-y-3">
           {tiers.map((tier) => {
             const note = saleWindowNote(tier);
+            const offers = offersByTier[tier.id] ?? [];
             return (
-              <Card
-                key={tier.id}
-                className="flex items-center justify-between gap-4"
-              >
-                <div>
-                  <h3 className="font-medium text-neutral-900">
-                    {tier.name}
-                  </h3>
-                  <p className="text-sm text-neutral-500">
-                    {formatPrice(tier)}
-                  </p>
+              <Card key={tier.id}>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-medium text-neutral-900">
+                      {tier.name}
+                    </h3>
+                    <p className="text-sm text-neutral-500">
+                      {formatPrice(tier)}
+                    </p>
+                  </div>
+                  {note ? (
+                    <Badge tone="neutral">{note}</Badge>
+                  ) : (
+                    <Link href={`/events/${event.id}/checkout/${tier.id}`}>
+                      <Button variant="primary">Buy</Button>
+                    </Link>
+                  )}
                 </div>
-                {note ? (
-                  <Badge tone="neutral">{note}</Badge>
-                ) : (
-                  <Link href={`/events/${event.id}/checkout/${tier.id}`}>
-                    <Button variant="primary">Buy</Button>
-                  </Link>
+                {offers.length > 0 && (
+                  <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3">
+                    {offers.map((offer) => (
+                      <div
+                        key={offer.id}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-neutral-700">
+                          {offer.name}
+                          {offer.description ? ` — ${offer.description}` : ""}
+                        </span>
+                        <Badge tone="success">
+                          {discountSummary(offer)}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </Card>
             );

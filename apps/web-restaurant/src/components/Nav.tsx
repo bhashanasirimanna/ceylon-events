@@ -47,6 +47,15 @@ export function Nav() {
             Food orders
           </Link>
         )}
+        {(user?.roles.includes("RESTAURANT_OWNER") ||
+          user?.roles.includes("RESTAURANT_STAFF")) && (
+          <Link
+            href="/offers"
+            className="text-sm text-neutral-600 hover:text-brand-600"
+          >
+            Offers
+          </Link>
+        )}
         {user?.roles.includes("RESTAURANT_OWNER") && (
           <Link
             href="/staff"

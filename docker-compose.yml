@@ -352,6 +352,32 @@ services:
       <<: *node-healthcheck
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
 
+  offers-service:
+    build:
+      context: .
+      dockerfile: ./services/offers-service/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/offers_db
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      EVENT_SERVICE_URL: http://event-service:3000
+      CHECKIN_SERVICE_URL: http://checkin-service:3000
+    ports:
+      - "${OFFERS_SERVICE_PORT}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      checkin-service:
+        condition: service_healthy
+    healthcheck:
+      <<: *node-healthcheck
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+
   api-gateway:
     build:
       context: .
@@ -371,6 +397,7 @@ services:
       PAYMENT_SERVICE_URL: http://payment-service:3000
       CHECKIN_SERVICE_URL: http://checkin-service:3000
       FOOD_ORDER_SERVICE_URL: http://food-order-service:3000
+      OFFERS_SERVICE_URL: http://offers-service:3000
     ports:
       - "${API_GATEWAY_PORT}:3000"
     depends_on:
@@ -383,6 +410,7 @@ services:
       - payment-service
       - checkin-service
       - food-order-service
+      - offers-service
     healthcheck:
       <<: *node-healthcheck
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]

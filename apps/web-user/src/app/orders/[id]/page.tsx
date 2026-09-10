@@ -10,6 +10,7 @@ import {
   TicketStatus,
 } from "@ceylon/shared-types";
 import { Badge, Button, Card } from "@ceylon/design-system";
+import type { OfferSnapshot } from "@ceylon/shared-types";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
 import type {
@@ -73,6 +74,9 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [event, setEvent] = useState<EventListing | null>(null);
   const [tiers, setTiers] = useState<Record<string, TicketTier>>({});
+  const [offersByTier, setOffersByTier] = useState<
+    Record<string, OfferSnapshot[]>
+  >({});
   const [paymentInfo, setPaymentInfo] = useState<PaymentForOrder | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +121,16 @@ export default function OrderDetailPage() {
         setTiers(map);
         setPaymentInfo(payment);
         setTickets(ticketList);
+
+        const offerEntries = await Promise.all(
+          Array.from(new Set(o.items.map((i) => i.ticketTierId))).map(
+            (tierId) =>
+              apiFetch<OfferSnapshot[]>(`/offers/by-ticket-tier/${tierId}`)
+                .then((offers) => [tierId, offers] as const)
+                .catch(() => [tierId, []] as const),
+          ),
+        );
+        setOffersByTier(Object.fromEntries(offerEntries));
       })
       .catch((err: unknown) =>
         setError(err instanceof ApiError ? err.message : "Failed to load order"),
@@ -192,41 +206,70 @@ export default function OrderDetailPage() {
 
       <Card className="mt-4">
         <div className="space-y-3">
-          {order.items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between border-b border-neutral-100 pb-3 last:border-none last:pb-0"
-            >
-              <div>
-                <p className="font-medium text-neutral-900">
-                  {tiers[item.ticketTierId]?.name ?? item.ticketTierId}
-                </p>
-                {item.seatLabel && (
-                  <p className="text-sm text-neutral-500">
-                    Seat {item.seatLabel}
+          {order.items.map((item) => {
+            const offers = offersByTier[item.ticketTierId] ?? [];
+            return (
+              <div
+                key={item.id}
+                className="flex items-center justify-between border-b border-neutral-100 pb-3 last:border-none last:pb-0"
+              >
+                <div>
+                  <p className="font-medium text-neutral-900">
+                    {tiers[item.ticketTierId]?.name ?? item.ticketTierId}
                   </p>
-                )}
-                {order.status !== OrderStatus.CANCELLED &&
-                  order.status !== OrderStatus.REFUNDED && (
-                    <Link
-                      href={`/orders/${order.id}/items/${item.id}/food`}
-                      className="mt-1 inline-block text-sm text-brand-600 hover:underline"
-                    >
-                      Pre-order food for this ticket →
-                    </Link>
+                  {item.seatLabel && (
+                    <p className="text-sm text-neutral-500">
+                      Seat {item.seatLabel}
+                    </p>
                   )}
+                  {offers.length > 0 && (
+                    <ul className="mt-1 space-y-0.5">
+                      {offers.map((offer) => (
+                        <li
+                          key={offer.id}
+                          className="text-xs text-green-700"
+                        >
+                          Includes: {offer.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {order.status !== OrderStatus.CANCELLED &&
+                    order.status !== OrderStatus.REFUNDED && (
+                      <Link
+                        href={`/orders/${order.id}/items/${item.id}/food`}
+                        className="mt-1 inline-block text-sm text-brand-600 hover:underline"
+                      >
+                        Pre-order food for this ticket →
+                      </Link>
+                    )}
+                </div>
+                <span className="text-sm text-neutral-700">
+                  {formatMoney(item.priceMinorUnits, order.currency)}
+                </span>
               </div>
-              <span className="text-sm text-neutral-700">
-                {formatMoney(item.priceMinorUnits, order.currency)}
+            );
+          })}
+        </div>
+        <div className="mt-4 space-y-1 border-t border-neutral-200 pt-3">
+          <div className="flex items-center justify-between text-sm text-neutral-600">
+            <span>Subtotal</span>
+            <span>{formatMoney(order.subtotalMinorUnits, order.currency)}</span>
+          </div>
+          {order.discountMinorUnits > 0 && (
+            <div className="flex items-center justify-between text-sm text-green-700">
+              <span>Promo code discount</span>
+              <span>
+                -{formatMoney(order.discountMinorUnits, order.currency)}
               </span>
             </div>
-          ))}
-        </div>
-        <div className="mt-4 flex items-center justify-between border-t border-neutral-200 pt-3">
-          <span className="font-medium text-neutral-900">Total</span>
-          <span className="font-semibold text-brand-600">
-            {formatMoney(order.totalMinorUnits, order.currency)}
-          </span>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-neutral-900">Total</span>
+            <span className="font-semibold text-brand-600">
+              {formatMoney(order.totalMinorUnits, order.currency)}
+            </span>
+          </div>
         </div>
         <p className="mt-2 text-sm text-neutral-500">
           Payment method: {order.paymentMethod}

@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import type { SeatStatusMap } from "@ceylon/seatmap-ui";
-import type { SeatMapSnapshot } from "@ceylon/shared-types";
+import type {
+  PromoCodeValidationResult,
+  SeatMapSnapshot,
+} from "@ceylon/shared-types";
 import { PaymentMethod, SeatStatus } from "@ceylon/shared-types";
 import { Button, Card } from "@ceylon/design-system";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -97,6 +100,13 @@ export default function CheckoutPage() {
   const [isPlacing, setIsPlacing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [, forceTick] = useState(0);
+
+  const [promoCodeInput, setPromoCodeInput] = useState("");
+  const [promoResult, setPromoResult] = useState<PromoCodeValidationResult | null>(
+    null,
+  );
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const holdRef = useRef<StoredHold | null>(null);
   holdRef.current = hold;
@@ -237,6 +247,46 @@ export default function CheckoutPage() {
     }
   }
 
+  async function handleValidatePromo() {
+    if (!event || !promoCodeInput.trim()) return;
+    setPromoError(null);
+    setIsValidatingPromo(true);
+    try {
+      const result = await apiFetch<PromoCodeValidationResult>(
+        `/promo-codes/validate?eventId=${encodeURIComponent(event.id)}&code=${encodeURIComponent(promoCodeInput.trim())}`,
+      );
+      setPromoResult(result);
+      if (!result.valid) {
+        setPromoError(result.reason ?? "This promo code isn't valid");
+      }
+    } catch (err) {
+      setPromoResult(null);
+      setPromoError(
+        err instanceof ApiError ? err.message : "Failed to validate promo code",
+      );
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  }
+
+  function estimatedDiscount(): number {
+    if (!tier || !promoResult?.valid || !promoResult.promoCode) return 0;
+    const promo = promoResult.promoCode;
+    if (
+      promo.applicableTicketTierId &&
+      promo.applicableTicketTierId !== tier.id
+    ) {
+      return 0;
+    }
+    if (promo.discountType === "PERCENTAGE") {
+      return Math.floor((tier.priceMinorUnits * promo.discountValue) / 100);
+    }
+    if (promo.discountType === "FIXED") {
+      return Math.min(promo.discountValue, tier.priceMinorUnits);
+    }
+    return 0;
+  }
+
   async function handlePlaceOrder() {
     if (!event || !tier) return;
     setError(null);
@@ -253,7 +303,12 @@ export default function CheckoutPage() {
         : [{ ticketTierId: tier.id }];
       const order = await apiFetch<Order>("/orders", {
         method: "POST",
-        body: JSON.stringify({ eventId: event.id, paymentMethod, items }),
+        body: JSON.stringify({
+          eventId: event.id,
+          paymentMethod,
+          items,
+          ...(promoResult?.valid ? { promoCode: promoCodeInput.trim() } : {}),
+        }),
       });
       if (versionId) {
         saveStoredHold(versionId, null);
@@ -387,6 +442,17 @@ export default function CheckoutPage() {
             {formatPrice(tier)}
           </span>
         </div>
+        {promoResult?.valid && estimatedDiscount() > 0 && (
+          <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3 text-sm">
+            <span className="text-neutral-500">After promo code (estimated)</span>
+            <span className="font-medium text-neutral-900">
+              {formatPrice({
+                ...tier,
+                priceMinorUnits: tier.priceMinorUnits - estimatedDiscount(),
+              })}
+            </span>
+          </div>
+        )}
       </Card>
 
       {versionId && hold && (
@@ -400,6 +466,36 @@ export default function CheckoutPage() {
             Back to seat picker
           </button>
         </p>
+      )}
+
+      <h3 className="mt-6 font-medium text-neutral-900">Promo code</h3>
+      <div className="mt-2 flex gap-2">
+        <input
+          value={promoCodeInput}
+          onChange={(e) => {
+            setPromoCodeInput(e.target.value);
+            setPromoResult(null);
+            setPromoError(null);
+          }}
+          placeholder="Enter promo code"
+          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+        />
+        <Button
+          variant="secondary"
+          disabled={isValidatingPromo || !promoCodeInput.trim()}
+          onClick={handleValidatePromo}
+        >
+          {isValidatingPromo ? "Checking…" : "Apply"}
+        </Button>
+      </div>
+      {promoError && <p className="mt-2 text-sm text-red-600">{promoError}</p>}
+      {promoResult?.valid && (
+        <div className="mt-2 flex items-center justify-between rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+          <span>Promo code applied</span>
+          <span className="font-medium">
+            -{formatPrice({ ...tier, priceMinorUnits: estimatedDiscount() })}
+          </span>
+        </div>
       )}
 
       <h3 className="mt-6 font-medium text-neutral-900">Payment method</h3>

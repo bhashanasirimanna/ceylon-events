@@ -14,5 +14,6 @@ export const createOrderSchema = z.object({
   eventId: z.string().uuid(),
   paymentMethod: z.nativeEnum(PaymentMethod),
   items: z.array(orderItemInputSchema).min(1),
+  promoCode: z.string().optional(),
 });
 export type CreateOrderDto = z.infer<typeof createOrderSchema>;

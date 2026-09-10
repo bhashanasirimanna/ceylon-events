@@ -3,6 +3,8 @@ import type {
   RestaurantStatus,
   EventStatus,
   PaymentStatus,
+  DiscountType,
+  RedemptionType,
 } from "@ceylon/shared-types";
 
 export interface UserResponse {
@@ -57,6 +59,47 @@ export interface TicketTier {
   saleEndAt: string | null;
   allowedSectionIds: string[] | null;
   quantityLimit: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Offer {
+  id: string;
+  eventId: string;
+  restaurantId: string;
+  name: string;
+  description: string | null;
+  discountType: DiscountType;
+  discountValue: number;
+  redemptionType: RedemptionType;
+  redemptionCap: number | null;
+  applicableMenuCategoryId: string | null;
+  applicableMenuItemIds: string[] | null;
+  ticketTierIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OfferRedemption {
+  id: string;
+  offerId: string;
+  orderItemId: string;
+  redeemedAt: string;
+  redeemedByUserId: string;
+  notes: string | null;
+}
+
+export interface PromoCode {
+  id: string;
+  eventId: string;
+  code: string;
+  discountType: DiscountType;
+  discountValue: number;
+  applicableTicketTierId: string | null;
+  usageLimit: number | null;
+  usageCount: number;
+  expiresAt: string | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

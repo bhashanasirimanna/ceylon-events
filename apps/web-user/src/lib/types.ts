@@ -108,7 +108,10 @@ export interface Order {
   buyerId: string;
   eventId: string;
   status: OrderStatus;
+  subtotalMinorUnits: number;
+  discountMinorUnits: number;
   totalMinorUnits: number;
+  promoCodeId: string | null;
   currency: string;
   paymentMethod: PaymentMethod;
   createdAt: string;

@@ -11,6 +11,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { firstValueFrom } from "rxjs";
 import { isAxiosError } from "axios";
 import {
+  DiscountType,
   EventStatus,
   OrderStatus,
   SeatStatus,
@@ -19,6 +20,7 @@ import {
 } from "@ceylon/shared-types";
 import { Repository } from "typeorm";
 import { canAccessOrder } from "../common/auth-helpers";
+import { PromoCodesService } from "../promo-codes/promo-codes.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { OrderItem } from "./entities/order-item.entity";
 import { Order } from "./entities/order.entity";
@@ -46,6 +48,7 @@ export class OrdersService {
     @InjectRepository(OrderItem)
     private readonly orderItemsRepository: Repository<OrderItem>,
     private readonly httpService: HttpService,
+    private readonly promoCodesService: PromoCodesService,
   ) {}
 
   // ---------------------------------------------------------------------
@@ -260,17 +263,50 @@ export class OrdersService {
       currency = tier.currency;
     }
 
-    const totalMinorUnits = preparedItems.reduce(
+    const subtotalMinorUnits = preparedItems.reduce(
       (sum, item) => sum + item.priceMinorUnits,
       0,
     );
+
+    let discountMinorUnits = 0;
+    let promoCodeId: string | null = null;
+    if (dto.promoCode) {
+      const promoCode = await this.promoCodesService.findValidForApplication(
+        dto.eventId,
+        dto.promoCode,
+      );
+      // Order-wide (applicableTicketTierId null) discounts off everything;
+      // a tier-scoped code only discounts that tier's line items.
+      const applicableSubtotal = promoCode.applicableTicketTierId
+        ? preparedItems
+            .filter((item) => item.ticketTierId === promoCode.applicableTicketTierId)
+            .reduce((sum, item) => sum + item.priceMinorUnits, 0)
+        : subtotalMinorUnits;
+
+      if (promoCode.discountType === DiscountType.PERCENTAGE) {
+        discountMinorUnits = Math.floor(
+          (applicableSubtotal * promoCode.discountValue) / 100,
+        );
+      } else if (promoCode.discountType === DiscountType.FIXED) {
+        discountMinorUnits = Math.min(promoCode.discountValue, applicableSubtotal);
+      }
+      // FREE_ITEM isn't a meaningful promo-code discount type here (that's
+      // an Offers Service concept, bundled per ticket tier) — a code
+      // created with it simply applies no discount.
+      promoCodeId = promoCode.id;
+    }
+
+    const totalMinorUnits = subtotalMinorUnits - discountMinorUnits;
 
     const order = await this.ordersRepository.save(
       this.ordersRepository.create({
         buyerId: caller.sub,
         eventId: dto.eventId,
         status: OrderStatus.PENDING,
+        subtotalMinorUnits,
+        discountMinorUnits,
         totalMinorUnits,
+        promoCodeId,
         currency,
         paymentMethod: dto.paymentMethod,
       }),
@@ -284,6 +320,10 @@ export class OrdersService {
         }),
       ),
     );
+
+    if (promoCodeId) {
+      await this.promoCodesService.incrementUsage(promoCodeId);
+    }
 
     return { ...order, items: savedItems };
   }
