@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, Badge } from "@ceylon/design-system";
+import { Button, Card, Badge, ImageUploader } from "@ceylon/design-system";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { Nav } from "@/components/Nav";
@@ -18,6 +18,7 @@ interface MenuItem {
   currency: string;
   dietaryTags: string[];
   isAvailable: boolean;
+  photoUrls: string[];
 }
 
 interface MenuCategory {
@@ -42,6 +43,9 @@ export default function MenuPage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategorySort, setNewCategorySort] = useState(0);
   const [addingCategory, setAddingCategory] = useState(false);
+  const [expandedPhotosItemId, setExpandedPhotosItemId] = useState<string | null>(
+    null,
+  );
 
   const [itemForms, setItemForms] = useState<
     Record<
@@ -194,6 +198,19 @@ export default function MenuPage() {
     }
   }
 
+  async function updateItemPhotos(item: MenuItem, photoUrls: string[]) {
+    setError(null);
+    try {
+      await apiFetch(`/menu-items/${item.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ photoUrls }),
+      });
+      await loadMenu(restaurantId);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update photos");
+    }
+  }
+
   return (
     <>
       <Nav />
@@ -228,46 +245,76 @@ export default function MenuPage() {
                   {category.items.map((item) => (
                     <li
                       key={item.id}
-                      className="flex items-center justify-between rounded-md border border-neutral-100 px-3 py-2"
+                      className="rounded-md border border-neutral-100 px-3 py-2"
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-neutral-900">
-                            {item.name}
-                          </span>
-                          <span className="text-sm text-neutral-500">
-                            {formatPrice(item.priceMinorUnits, item.currency)}
-                          </span>
-                          <Badge tone={item.isAvailable ? "success" : "neutral"}>
-                            {item.isAvailable ? "Available" : "Unavailable"}
-                          </Badge>
-                        </div>
-                        {item.description && (
-                          <p className="text-sm text-neutral-500">
-                            {item.description}
-                          </p>
-                        )}
-                        {item.dietaryTags.length > 0 && (
-                          <div className="mt-1 flex gap-1">
-                            {item.dietaryTags.map((tag) => (
-                              <Badge key={tag} tone="neutral">
-                                {tag}
-                              </Badge>
-                            ))}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            {item.photoUrls[0] && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.photoUrls[0]}
+                                alt=""
+                                className="h-8 w-8 rounded object-cover"
+                              />
+                            )}
+                            <span className="font-medium text-neutral-900">
+                              {item.name}
+                            </span>
+                            <span className="text-sm text-neutral-500">
+                              {formatPrice(item.priceMinorUnits, item.currency)}
+                            </span>
+                            <Badge tone={item.isAvailable ? "success" : "neutral"}>
+                              {item.isAvailable ? "Available" : "Unavailable"}
+                            </Badge>
                           </div>
-                        )}
+                          {item.description && (
+                            <p className="text-sm text-neutral-500">
+                              {item.description}
+                            </p>
+                          )}
+                          {item.dietaryTags.length > 0 && (
+                            <div className="mt-1 flex gap-1">
+                              {item.dietaryTags.map((tag) => (
+                                <Badge key={tag} tone="neutral">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="secondary"
+                            onClick={() =>
+                              setExpandedPhotosItemId((prev) =>
+                                prev === item.id ? null : item.id,
+                              )
+                            }
+                          >
+                            Photos ({item.photoUrls.length})
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => toggleAvailability(item)}
+                          >
+                            {item.isAvailable ? "Mark unavailable" : "Mark available"}
+                          </Button>
+                          <Button variant="danger" onClick={() => deleteItem(item)}>
+                            Delete
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="secondary"
-                          onClick={() => toggleAvailability(item)}
-                        >
-                          {item.isAvailable ? "Mark unavailable" : "Mark available"}
-                        </Button>
-                        <Button variant="danger" onClick={() => deleteItem(item)}>
-                          Delete
-                        </Button>
-                      </div>
+                      {expandedPhotosItemId === item.id && (
+                        <div className="mt-3 border-t border-neutral-100 pt-3">
+                          <ImageUploader
+                            category="menu-photo"
+                            urls={item.photoUrls}
+                            onChange={(urls) => updateItemPhotos(item, urls)}
+                            apiFetch={apiFetch}
+                          />
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

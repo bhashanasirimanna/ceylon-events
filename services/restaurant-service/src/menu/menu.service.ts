@@ -66,6 +66,7 @@ export class MenuService {
       currency: dto.currency ?? "LKR",
       dietaryTags: dto.dietaryTags ?? [],
       isAvailable: dto.isAvailable ?? true,
+      photoUrls: dto.photoUrls ?? [],
     });
     return this.itemsRepository.save(item);
   }

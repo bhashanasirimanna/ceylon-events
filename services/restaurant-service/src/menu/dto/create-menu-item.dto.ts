@@ -41,4 +41,9 @@ export class CreateMenuItemDto {
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photoUrls?: string[];
 }

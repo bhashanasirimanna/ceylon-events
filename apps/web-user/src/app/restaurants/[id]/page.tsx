@@ -102,6 +102,19 @@ export default function RestaurantDetailPage() {
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {category.items.map((item) => (
                 <Card key={item.id}>
+                  {item.photoUrls.length > 0 && (
+                    <div className="mb-3 flex gap-1.5 overflow-x-auto">
+                      {item.photoUrls.map((url, index) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={url}
+                          src={url}
+                          alt={`${item.name} photo ${index + 1}`}
+                          className="h-24 w-32 flex-none rounded-md object-cover"
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="font-medium text-neutral-900">
                       {item.name}
@@ -110,6 +123,11 @@ export default function RestaurantDetailPage() {
                       {item.currency} {(item.priceMinorUnits / 100).toFixed(2)}
                     </span>
                   </div>
+                  {item.avgRating !== null && (
+                    <p className="mt-0.5 text-xs text-neutral-500">
+                      ★ {item.avgRating.toFixed(1)}
+                    </p>
+                  )}
                   {item.description && (
                     <p className="mt-1 text-sm text-neutral-500">
                       {item.description}

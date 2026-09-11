@@ -44,4 +44,9 @@ export class UpdateMenuItemDto {
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photoUrls?: string[];
 }
