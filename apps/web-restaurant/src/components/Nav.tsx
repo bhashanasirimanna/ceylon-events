@@ -54,6 +54,15 @@ export function Nav() {
         {(user?.roles.includes("RESTAURANT_OWNER") ||
           user?.roles.includes("RESTAURANT_STAFF")) && (
           <Link
+            href="/tables"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
+          >
+            Tables
+          </Link>
+        )}
+        {(user?.roles.includes("RESTAURANT_OWNER") ||
+          user?.roles.includes("RESTAURANT_STAFF")) && (
+          <Link
             href="/offers"
             className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
           >

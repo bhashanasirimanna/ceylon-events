@@ -97,6 +97,45 @@ export interface SeatMapSnapshot {
   tables: TableSnapshot[];
 }
 
+// Derived, read-only view over the existing per-seat SeatStatus data —
+// deliberately not a stored field anywhere. A table is "BOOKED" once any
+// one of its seats is sold; "HELD" if none are sold yet but at least one
+// is mid-checkout; otherwise "AVAILABLE". This is the only table-level
+// booking state the system needs (e.g. for staff deciding whether a
+// waiter order may be placed against it) — it is NOT a food-order concept
+// and must never be confused with FoodOrderStatus.
+export type TableBookingStatus = "AVAILABLE" | "HELD" | "BOOKED";
+
+// Structurally minimal on purpose — callers pass either the full
+// SeatMapSnapshot or a service's own slimmer local mirror of it (e.g.
+// food-order-service's UpstreamSeatMapSnapshot), which only ever carries
+// table/seat ids, never the builder-only fields (position, shape, etc.).
+export interface TableAvailabilityInput {
+  tables: Array<{ id: string; seats: Array<{ id: string }> }>;
+}
+
+export function aggregateTableStatuses(
+  snapshot: TableAvailabilityInput,
+  availability: Record<string, SeatStatus>,
+): Record<string, TableBookingStatus> {
+  const result: Record<string, TableBookingStatus> = {};
+  for (const table of snapshot.tables) {
+    let status: TableBookingStatus = "AVAILABLE";
+    for (const seat of table.seats) {
+      const seatStatus = availability[seat.id];
+      if (seatStatus === SeatStatus.SOLD) {
+        status = "BOOKED";
+        break;
+      }
+      if (seatStatus === SeatStatus.HELD || seatStatus === SeatStatus.HELD_BY_ME) {
+        status = "HELD";
+      }
+    }
+    result[table.id] = status;
+  }
+  return result;
+}
+
 export const createHoldSchema = z.object({
   seatId: z.string().uuid(),
 });

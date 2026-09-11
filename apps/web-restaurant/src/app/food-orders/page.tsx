@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge, Button, Card } from "@ceylon/design-system";
 import { useAuth } from "@/lib/auth-context";
@@ -8,6 +9,7 @@ import { apiFetch, ApiError, getStoredTokens } from "@/lib/api-client";
 import { Nav } from "@/components/Nav";
 
 type FoodOrderStatus = "RECEIVED" | "PREPARING" | "READY" | "SERVED";
+type FoodOrderSource = "PRE_ORDER" | "WAITER";
 
 interface EventListing {
   id: string;
@@ -28,15 +30,19 @@ interface FoodPreOrderItemSnapshot {
 
 interface FoodPreOrderSnapshot {
   id: string;
-  orderId: string;
-  orderItemId: string;
+  orderId: string | null;
+  orderItemId: string | null;
   eventId: string;
   restaurantId: string;
-  buyerId: string;
+  buyerId: string | null;
   seatId: string | null;
   seatLabel: string | null;
+  tableId: string | null;
   tableNumber: string | null;
   status: FoodOrderStatus;
+  source: FoodOrderSource;
+  createdByUserId: string | null;
+  notes: string | null;
   items: FoodPreOrderItemSnapshot[];
   createdAt: string;
   updatedAt: string;
@@ -89,9 +95,7 @@ export default function FoodOrdersPage() {
   );
   const [summary, setSummary] = useState<MenuItemAggregate[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOrderItemIds, setSelectedOrderItemIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkTargetStatus, setBulkTargetStatus] =
     useState<FoodOrderStatus>("PREPARING");
 
@@ -156,7 +160,7 @@ export default function FoodOrdersPage() {
   useEffect(() => {
     if (!selectedEventId) return;
     setError(null);
-    setSelectedOrderItemIds(new Set());
+    setSelectedIds(new Set());
     loadFoodOrders(selectedEventId, statusFilter);
     loadSummary(selectedEventId);
 
@@ -190,37 +194,54 @@ export default function FoodOrdersPage() {
     };
   }, []);
 
-  const groupedByTable = useMemo(() => {
+  interface TableGroup {
+    key: string;
+    tableId: string | null;
+    label: string;
+    orders: FoodPreOrderSnapshot[];
+  }
+
+  // Operational grouping is always eventId (already implicit — this is a
+  // per-event listing) + tableId, never tableNumber/label alone or the
+  // order source. tableNumber is only used for the group's display label.
+  const groupedByTable = useMemo<TableGroup[]>(() => {
     if (!foodOrders) return [];
-    const groups = new Map<string, FoodPreOrderSnapshot[]>();
+    const groups = new Map<string, TableGroup>();
     for (const fpo of foodOrders) {
-      const key = fpo.tableNumber ?? GENERAL_ADMISSION_BUCKET;
+      // tableId is the real grouping identity going forward. The
+      // tableNumber-keyed fallback only covers pre-orders placed before
+      // this field existed (never null for anything created after) — it's
+      // still scoped to one event, so the label is unambiguous.
+      const key = fpo.tableId ?? (fpo.tableNumber ? `label:${fpo.tableNumber}` : GENERAL_ADMISSION_BUCKET);
       const existing = groups.get(key);
       if (existing) {
-        existing.push(fpo);
+        existing.orders.push(fpo);
       } else {
-        groups.set(key, [fpo]);
+        groups.set(key, {
+          key,
+          tableId: fpo.tableId,
+          label: fpo.tableNumber ? `Table ${fpo.tableNumber}` : GENERAL_ADMISSION_BUCKET,
+          orders: [fpo],
+        });
       }
     }
-    const entries = Array.from(groups.entries());
-    entries.sort(([a], [b]) => {
-      if (a === GENERAL_ADMISSION_BUCKET) return 1;
-      if (b === GENERAL_ADMISSION_BUCKET) return -1;
-      return a.localeCompare(b, undefined, { numeric: true });
+    const entries = Array.from(groups.values());
+    entries.sort((a, b) => {
+      if (a.key === GENERAL_ADMISSION_BUCKET) return 1;
+      if (b.key === GENERAL_ADMISSION_BUCKET) return -1;
+      return a.label.localeCompare(b.label, undefined, { numeric: true });
     });
     return entries;
   }, [foodOrders]);
 
-  async function updateStatus(orderItemId: string, status: FoodOrderStatus) {
+  async function updateStatus(id: string, status: FoodOrderStatus) {
     try {
       const updated = await apiFetch<FoodPreOrderSnapshot>(
-        `/food-pre-orders/by-order-item/${orderItemId}/status`,
+        `/food-pre-orders/${id}/status`,
         { method: "PATCH", body: JSON.stringify({ status }) },
       );
       setFoodOrders(
-        (prev) =>
-          prev?.map((fpo) => (fpo.orderItemId === orderItemId ? updated : fpo)) ??
-          prev,
+        (prev) => prev?.map((fpo) => (fpo.id === id ? updated : fpo)) ?? prev,
       );
       if (selectedEventId) {
         loadSummary(selectedEventId);
@@ -233,12 +254,12 @@ export default function FoodOrdersPage() {
   }
 
   async function applyBulkStatus() {
-    if (selectedOrderItemIds.size === 0) return;
+    if (selectedIds.size === 0) return;
     try {
       await apiFetch<FoodPreOrderSnapshot[]>("/food-pre-orders/bulk-status", {
         method: "PATCH",
         body: JSON.stringify({
-          orderItemIds: Array.from(selectedOrderItemIds),
+          ids: Array.from(selectedIds),
           status: bulkTargetStatus,
         }),
       });
@@ -246,7 +267,7 @@ export default function FoodOrdersPage() {
         await loadFoodOrders(selectedEventId, statusFilter);
         await loadSummary(selectedEventId);
       }
-      setSelectedOrderItemIds(new Set());
+      setSelectedIds(new Set());
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : "Failed to apply bulk update",
@@ -254,13 +275,13 @@ export default function FoodOrdersPage() {
     }
   }
 
-  function toggleSelected(orderItemId: string) {
-    setSelectedOrderItemIds((prev) => {
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(orderItemId)) {
-        next.delete(orderItemId);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        next.add(orderItemId);
+        next.add(id);
       }
       return next;
     });
@@ -360,10 +381,10 @@ export default function FoodOrdersPage() {
                 </select>
               </label>
 
-              {selectedOrderItemIds.size > 0 && (
+              {selectedIds.size > 0 && (
                 <div className="flex items-center gap-2 rounded-none border border-zinc-800 bg-zinc-900 px-3 py-1.5">
                   <span className="text-sm text-zinc-400">
-                    {selectedOrderItemIds.size} selected
+                    {selectedIds.size} selected
                   </span>
                   <select
                     className="rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
@@ -391,32 +412,55 @@ export default function FoodOrdersPage() {
               </p>
             ) : (
               <div className="flex flex-col gap-4">
-                {groupedByTable.map(([tableNumber, orders]) => (
-                  <Card key={tableNumber}>
-                    <h2 className="mb-3 font-medium text-white">
-                      {tableNumber === GENERAL_ADMISSION_BUCKET
-                        ? tableNumber
-                        : `Table ${tableNumber}`}
-                    </h2>
+                {groupedByTable.map((group) => (
+                  <Card key={group.key}>
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <h2 className="font-medium text-white">
+                        {group.label}{" "}
+                        <span className="font-mono text-xs font-normal text-zinc-500">
+                          {group.orders.length} order
+                          {group.orders.length === 1 ? "" : "s"}
+                        </span>
+                      </h2>
+                      {group.tableId && selectedEventId && (
+                        <div className="flex gap-2">
+                          <Link
+                            href={`/tables/${group.tableId}?eventId=${selectedEventId}`}
+                            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
+                          >
+                            View table
+                          </Link>
+                          <Link
+                            href={`/tables/${group.tableId}/new-order?eventId=${selectedEventId}`}
+                            className="font-mono text-xs font-bold uppercase tracking-widest text-brand-500 hover:text-brand-400"
+                          >
+                            + Add order
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex flex-col gap-3">
-                      {orders.map((fpo) => (
+                      {group.orders.map((fpo) => (
                         <div
-                          key={fpo.orderItemId}
+                          key={fpo.id}
                           className="rounded-none border border-zinc-800 p-3"
                         >
                           <div className="mb-2 flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <input
                                 type="checkbox"
-                                checked={selectedOrderItemIds.has(
-                                  fpo.orderItemId,
-                                )}
-                                onChange={() => toggleSelected(fpo.orderItemId)}
+                                checked={selectedIds.has(fpo.id)}
+                                onChange={() => toggleSelected(fpo.id)}
                               />
+                              <Badge tone={fpo.source === "WAITER" ? "brand" : "neutral"}>
+                                {fpo.source === "WAITER" ? "Waiter" : "Pre-order"}
+                              </Badge>
                               <span className="text-sm text-zinc-400">
                                 {fpo.seatLabel
                                   ? `Seat ${fpo.seatLabel}`
-                                  : "General Admission"}
+                                  : fpo.tableId
+                                    ? null
+                                    : "General Admission"}
                               </span>
                             </div>
                             <Badge tone={STATUS_TONE[fpo.status]}>
@@ -436,13 +480,18 @@ export default function FoodOrdersPage() {
                               </li>
                             ))}
                           </ul>
+                          {fpo.notes && (
+                            <p className="mb-3 text-sm text-zinc-500">
+                              Note: {fpo.notes}
+                            </p>
+                          )}
                           <div className="flex flex-wrap gap-1">
                             {STATUS_ORDER.map((s) => (
                               <Button
                                 key={s}
                                 variant={s === fpo.status ? "primary" : "secondary"}
                                 className="px-2 py-1 text-xs"
-                                onClick={() => updateStatus(fpo.orderItemId, s)}
+                                onClick={() => updateStatus(fpo.id, s)}
                                 disabled={s === fpo.status}
                               >
                                 {s}

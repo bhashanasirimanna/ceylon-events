@@ -17,6 +17,14 @@ const DEFAULT_TTL_SECONDS = Number(
   process.env.SEAT_HOLD_TTL_SECONDS ?? 300,
 );
 
+// Once an order actually exists against a seat, its hold is extended well
+// past the ordinary browsing TTL above — a buyer who's reached checkout
+// shouldn't lose their seat to someone else purely because payment (or
+// payment-proof review) takes longer than a few minutes.
+const ORDER_HOLD_TTL_SECONDS = Number(
+  process.env.SEAT_ORDER_HOLD_TTL_SECONDS ?? 1800,
+);
+
 export interface HoldResult {
   seatId: string;
   holderToken: string;
@@ -140,6 +148,33 @@ export class HoldsService {
       }
     });
     return result;
+  }
+
+  /**
+   * Called by the Order Service, server-to-server, right after it validates
+   * the buyer still holds this seat — converts the buyer's short browsing
+   * hold into a longer order-scoped one. Reuses renewHold's own token/TTL
+   * semantics (404 if the hold already lapsed, 403 if it's someone else's)
+   * rather than a parallel reservation concept, so the order genuinely
+   * fails atomically if another buyer's hold has since taken the seat.
+   */
+  async reserveForOrder(
+    versionId: string,
+    seatId: string,
+    holderToken: string,
+  ): Promise<HoldResult> {
+    return this.renewHold(versionId, seatId, holderToken, ORDER_HOLD_TTL_SECONDS);
+  }
+
+  /**
+   * Called by the Order Service when a pending order is cancelled, so the
+   * seat frees up immediately rather than staying locked for the rest of
+   * its (now pointless) order-scoped TTL. Unconditional by design — this
+   * is an internal, service-to-service cleanup call with no buyer-supplied
+   * holderToken to check against.
+   */
+  async releaseForOrder(versionId: string, seatId: string): Promise<void> {
+    await this.redis.del(this.holdKey(versionId, seatId));
   }
 
   async markSold(

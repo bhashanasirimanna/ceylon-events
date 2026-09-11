@@ -1,4 +1,4 @@
-import type { OrderStatus } from "@ceylon/shared-types";
+import type { OrderStatus, SeatStatus } from "@ceylon/shared-types";
 
 export interface UpstreamOrderItem {
   id: string;
@@ -48,3 +48,5 @@ export interface UpstreamSeatMapSnapshot {
     seats: Array<{ id: string; seatLabel: string }>;
   }>;
 }
+
+export type UpstreamAvailability = Record<string, SeatStatus>;

@@ -1,4 +1,4 @@
-import { FoodOrderStatus } from "@ceylon/shared-types";
+import { FoodOrderSource, FoodOrderStatus } from "@ceylon/shared-types";
 import {
   Column,
   CreateDateColumn,
@@ -9,10 +9,17 @@ import {
   UpdateDateColumn,
 } from "typeorm";
 
-// One per ticket (order item) — the "line items" (menu selections) live on
-// FoodPreOrderItem. orderItemId is unique: a ticket has at most one food
-// pre-order, submitting again replaces its items rather than creating a
-// second one.
+// A food order for a table — either a guest's own pre-order against their
+// ticket (source = PRE_ORDER) or an order a waiter places at the table
+// directly (source = WAITER). Both share the exact same table identity
+// and dashboard grouping; only their origin and a handful of
+// origin-specific columns differ. orderId/orderItemId/buyerId are
+// therefore nullable — a WAITER order has none of those, only a table.
+//
+// orderItemId keeps its unique constraint (a ticket has at most one
+// pre-order — submitting again replaces its items) — Postgres treats
+// multiple NULLs as distinct under a unique index, so this is unaffected
+// by WAITER rows, which always have a null orderItemId.
 @Entity({ name: "food_pre_orders" })
 @Unique(["orderItemId"])
 export class FoodPreOrder {
@@ -20,11 +27,11 @@ export class FoodPreOrder {
   id: string;
 
   @Index()
-  @Column({ name: "order_id", type: "uuid" })
-  orderId: string;
+  @Column({ name: "order_id", type: "uuid", nullable: true })
+  orderId: string | null;
 
-  @Column({ name: "order_item_id", type: "uuid" })
-  orderItemId: string;
+  @Column({ name: "order_item_id", type: "uuid", nullable: true })
+  orderItemId: string | null;
 
   @Index()
   @Column({ name: "event_id", type: "uuid" })
@@ -34,8 +41,8 @@ export class FoodPreOrder {
   @Column({ name: "restaurant_id", type: "uuid" })
   restaurantId: string;
 
-  @Column({ name: "buyer_id", type: "uuid" })
-  buyerId: string;
+  @Column({ name: "buyer_id", type: "uuid", nullable: true })
+  buyerId: string | null;
 
   @Column({ name: "seat_id", type: "uuid", nullable: true })
   seatId: string | null;
@@ -43,10 +50,17 @@ export class FoodPreOrder {
   @Column({ name: "seat_label", type: "varchar", nullable: true })
   seatLabel: string | null;
 
+  // Authoritative table identity (FK into venue-service's table, cross-
+  // service reference only — no DB-level relation). This is the real
+  // grouping key; tableNumber below is display-only.
+  @Index()
+  @Column({ name: "table_id", type: "uuid", nullable: true })
+  tableId: string | null;
+
   // Denormalized from the venue-service seat-map snapshot at submission
-  // time. Null for general-admission tickets — those group under a
-  // synthetic "General Admission" bucket in the restaurant dashboard
-  // rather than a real table.
+  // time, purely for display. Null for general-admission tickets — those
+  // group under a synthetic "General Admission" bucket in the restaurant
+  // dashboard rather than a real table.
   @Column({ name: "table_number", type: "varchar", nullable: true })
   tableNumber: string | null;
 
@@ -56,6 +70,29 @@ export class FoodPreOrder {
     default: FoodOrderStatus.RECEIVED,
   })
   status: FoodOrderStatus;
+
+  @Column({
+    type: "enum",
+    enum: FoodOrderSource,
+    default: FoodOrderSource.PRE_ORDER,
+  })
+  source: FoodOrderSource;
+
+  // Set only for WAITER-sourced orders — the authenticated staff member
+  // who created it. Never accepted from the request body.
+  @Column({ name: "created_by_user_id", type: "uuid", nullable: true })
+  createdByUserId: string | null;
+
+  @Column({ type: "text", nullable: true })
+  notes: string | null;
+
+  // Idempotency key for waiter-order creation only — a double-tapped
+  // "Place order" resubmits the same key and gets the original order back
+  // rather than creating a duplicate. Nullable+unique, same reasoning as
+  // orderItemId above: multiple NULLs (every PRE_ORDER row) are fine.
+  @Index({ unique: true })
+  @Column({ name: "client_request_id", type: "varchar", nullable: true })
+  clientRequestId: string | null;
 
   @CreateDateColumn({ name: "created_at" })
   createdAt: Date;

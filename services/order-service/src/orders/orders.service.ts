@@ -140,6 +140,65 @@ export class OrdersService {
     }
   }
 
+  /**
+   * The atomic claim step: converts the buyer's short browsing hold into
+   * an order-scoped one (see venue-service's HoldsService.reserveForOrder)
+   * so the seat survives the whole pending-payment window rather than
+   * lapsing back to available a few minutes later. Rejects — same as the
+   * availability check above — if another buyer's hold has since taken
+   * the seat.
+   */
+  private async reserveSeatForOrder(
+    seatMapVersionId: string,
+    seatId: string,
+    holderToken: string,
+  ): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.httpService.post(
+          `${this.venueServiceUrl}/seat-map-versions/${seatMapVersionId}/seats/${seatId}/reserve-for-order`,
+          { holderToken },
+          {
+            headers: { "x-internal-secret": this.internalSecret },
+            timeout: HTTP_TIMEOUT_MS,
+          },
+        ),
+      );
+    } catch (error) {
+      if (
+        isAxiosError(error) &&
+        (error.response?.status === 403 || error.response?.status === 404)
+      ) {
+        throw new ConflictException("You no longer hold this seat");
+      }
+      throw new BadGatewayException("Venue service is unavailable");
+    }
+  }
+
+  /**
+   * Frees a seat's hold immediately when a pending order holding it is
+   * cancelled. Best-effort/fire-and-forget per seat, same reasoning as
+   * this service's other internal calls — a transient venue-service
+   * failure here shouldn't block the cancellation itself; the seat's
+   * order-scoped hold will simply lapse on its own TTL as a fallback.
+   */
+  private releaseSeatHold(seatMapVersionId: string, seatId: string): void {
+    firstValueFrom(
+      this.httpService.post(
+        `${this.venueServiceUrl}/seat-map-versions/${seatMapVersionId}/seats/${seatId}/release-for-order`,
+        {},
+        {
+          headers: { "x-internal-secret": this.internalSecret },
+          timeout: HTTP_TIMEOUT_MS,
+        },
+      ),
+    ).catch((error) => {
+      this.logger.warn(
+        `Failed to release seat ${seatId} hold: ${(error as Error).message}`,
+      );
+    });
+  }
+
   private findSeatInSnapshot(
     snapshot: UpstreamSeatMapSnapshot,
     seatId: string,
@@ -160,10 +219,11 @@ export class OrdersService {
   /**
    * Deliberately does NOT call venue-service's mark-sold endpoint. This
    * order only records the buyer's intent to pay — real payment collection
-   * and confirmation is the future Payment Service's job (Phase 4). Seats
-   * stay protected purely by their Redis hold-lock (see venue-service)
-   * until then; marking a seat permanently sold happens only once a
-   * payment actually confirms.
+   * and confirmation is the future Payment Service's job (Phase 4). Every
+   * seated item's hold IS atomically extended into an order-scoped
+   * reservation here (reserveSeatForOrder), so the seat stays claimed for
+   * this order through the whole pending-payment window; marking a seat
+   * permanently sold still happens only once a payment actually confirms.
    */
   async create(
     dto: CreateOrderDto,
@@ -209,6 +269,16 @@ export class OrdersService {
       const seatId = itemInput.seatId ?? null;
       let seatLabel: string | null = null;
 
+      // This event sells seats at physical tables rather than general
+      // admission — every ticket must be tied to one, both so two guests
+      // can never end up claiming the same table and so food pre-orders
+      // downstream have a table to inherit.
+      if (!seatId && event.seatMapVersionId) {
+        throw new BadRequestException(
+          "A table must be selected for this event",
+        );
+      }
+
       if (seatId) {
         if (!itemInput.holderToken) {
           throw new BadRequestException(
@@ -228,6 +298,15 @@ export class OrdersService {
         if (availability[seatId] !== SeatStatus.HELD_BY_ME) {
           throw new ConflictException("You no longer hold this seat");
         }
+
+        // Atomically claim the seat for this order before it's persisted —
+        // the buyer's original browsing hold is short-lived and shouldn't
+        // be the only thing standing between here and payment confirmation.
+        await this.reserveSeatForOrder(
+          event.seatMapVersionId,
+          seatId,
+          itemInput.holderToken,
+        );
 
         if (!snapshot) {
           snapshot = await this.fetchSnapshot(event.seatMapVersionId);
@@ -451,6 +530,20 @@ export class OrdersService {
     }
     order.status = OrderStatus.CANCELLED;
     await this.ordersRepository.save(order);
+
+    const items = await this.orderItemsRepository.find({
+      where: { orderId: order.id },
+    });
+    const seatedItems = items.filter((item) => item.seatId);
+    if (seatedItems.length > 0) {
+      const event = await this.fetchEvent(order.eventId).catch(() => null);
+      if (event?.seatMapVersionId) {
+        for (const item of seatedItems) {
+          this.releaseSeatHold(event.seatMapVersionId, item.seatId!);
+        }
+      }
+    }
+
     this.notifyBuyer(
       order.buyerId,
       NotificationType.ORDER_CANCELLED,

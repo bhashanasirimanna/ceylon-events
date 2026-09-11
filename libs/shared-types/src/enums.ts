@@ -45,6 +45,15 @@ export enum FoodOrderStatus {
   SERVED = "SERVED",
 }
 
+// Independent of FoodOrderStatus (kitchen progress) — this only says how
+// the order originated. A customer's own pre-order vs. a waiter placing an
+// order at the table for the same physical table are otherwise identical
+// once they reach the kitchen.
+export enum FoodOrderSource {
+  PRE_ORDER = "PRE_ORDER",
+  WAITER = "WAITER",
+}
+
 export enum RedemptionType {
   UNLIMITED = "UNLIMITED",
   CAPPED = "CAPPED",

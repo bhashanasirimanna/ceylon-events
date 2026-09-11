@@ -5,6 +5,7 @@ import {
   Headers,
   Param,
   Patch,
+  Post,
   Query,
   Sse,
   UseGuards,
@@ -16,6 +17,7 @@ import { SseQueryJwtGuard } from "../common/sse-query-jwt.guard";
 import { BulkUpdateFoodOrderStatusDto } from "./dto/bulk-update-status.dto";
 import { ListByEventQuery } from "./dto/list-by-event.query";
 import { SubmitFoodPreOrderDto } from "./dto/submit-food-pre-order.dto";
+import { SubmitWaiterFoodOrderDto } from "./dto/submit-waiter-food-order.dto";
 import { UpdateFoodOrderStatusDto } from "./dto/update-status.dto";
 import { FoodOrdersService } from "./food-orders.service";
 import { FoodOrdersRealtimeService } from "./realtime/food-orders-realtime.service";
@@ -64,6 +66,19 @@ export class FoodOrdersController {
     return this.foodOrdersService.updateStatus(orderItemId, dto, caller);
   }
 
+  // Keyed by the food order's own id, not orderItemId — the one
+  // identifier both PRE_ORDER and WAITER-sourced orders always have.
+  @Patch(":id/status")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...RESTAURANT_STAFF_ROLES)
+  updateStatusById(
+    @Param("id") id: string,
+    @Body() dto: UpdateFoodOrderStatusDto,
+    @CurrentUser() caller: JwtAccessPayload,
+  ) {
+    return this.foodOrdersService.updateStatusById(id, dto, caller);
+  }
+
   @Patch("bulk-status")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...RESTAURANT_STAFF_ROLES)
@@ -74,6 +89,20 @@ export class FoodOrdersController {
     return this.foodOrdersService.bulkUpdateStatus(dto, caller);
   }
 
+  // Staff/waiter table-order creation. Authorization and every
+  // authoritative value (restaurant, table eligibility, menu item
+  // prices, source, staff identity) are resolved server-side in the
+  // service — nothing from the body is trusted as-is.
+  @Post("staff")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...RESTAURANT_STAFF_ROLES)
+  createWaiterOrder(
+    @Body() dto: SubmitWaiterFoodOrderDto,
+    @CurrentUser() caller: JwtAccessPayload,
+  ) {
+    return this.foodOrdersService.createWaiterOrder(dto, caller);
+  }
+
   @Get("by-event/:eventId")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...RESTAURANT_STAFF_ROLES)
@@ -82,7 +111,12 @@ export class FoodOrdersController {
     @Query() query: ListByEventQuery,
     @CurrentUser() caller: JwtAccessPayload,
   ) {
-    return this.foodOrdersService.listForEvent(eventId, query.status, caller);
+    return this.foodOrdersService.listForEvent(
+      eventId,
+      query.status,
+      caller,
+      query.tableId,
+    );
   }
 
   @Get("by-event/:eventId/summary")

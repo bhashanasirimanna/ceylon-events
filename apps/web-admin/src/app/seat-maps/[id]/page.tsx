@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Button, Card, ColorPicker } from "@ceylon/design-system";
+import { Button, Card, ColorPicker, QRCodeDisplay } from "@ceylon/design-system";
 import type { CanvasData } from "@ceylon/seatmap-ui";
 import { TableShape } from "@ceylon/shared-types";
 
@@ -489,6 +489,17 @@ export default function SeatMapBuilderPage() {
                     >
                       Delete this table
                     </button>
+
+                    <div className="mt-4 border-t border-zinc-800 pt-4">
+                      <p className="mb-2 text-xs text-zinc-500">
+                        Physical table QR — print and attach to Table{" "}
+                        {selectedTable.tableNumber}. Encodes only the table&apos;s
+                        own id, never an event, booking, or customer — a waiter
+                        scanning it still has to be logged in and pick the
+                        active event themselves.
+                      </p>
+                      <QRCodeDisplay value={selectedTable.id} size={140} />
+                    </div>
                   </>
                 )}
               </Card>

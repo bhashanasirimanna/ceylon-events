@@ -89,4 +89,30 @@ export class SeatMapVersionsController {
   ) {
     await this.holdsService.markSold(versionId, seatId, dto.orderId);
   }
+
+  // Called by the Order Service at order-creation time, right after it
+  // confirms the buyer still holds this seat — the atomic claim step that
+  // protects a seat for the whole pending-payment window, not just the
+  // buyer's original short browsing hold.
+  @Post("seats/:seatId/reserve-for-order")
+  @UseGuards(InternalAuthGuard)
+  async reserveForOrder(
+    @Param("versionId") versionId: string,
+    @Param("seatId") seatId: string,
+    @Body() dto: ReleaseHoldDto,
+  ) {
+    return this.holdsService.reserveForOrder(versionId, seatId, dto.holderToken);
+  }
+
+  // Called by the Order Service when a pending order is cancelled, so the
+  // seat is immediately available to other buyers again.
+  @Post("seats/:seatId/release-for-order")
+  @UseGuards(InternalAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async releaseForOrder(
+    @Param("versionId") versionId: string,
+    @Param("seatId") seatId: string,
+  ) {
+    await this.holdsService.releaseForOrder(versionId, seatId);
+  }
 }
