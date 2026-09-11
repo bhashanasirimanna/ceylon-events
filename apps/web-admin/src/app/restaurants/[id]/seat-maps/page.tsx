@@ -92,7 +92,7 @@ export default function RestaurantSeatMapsPage() {
             )}
             {seatMaps.map((sm) => (
               <Link key={sm.id} href={`/seat-maps/${sm.id}`}>
-                <Card className="flex items-center justify-between hover:border-brand-300">
+                <Card className="flex items-center justify-between hover:border-brand-500">
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="font-medium text-white">{sm.name}</h2>

@@ -17,3 +17,9 @@ export const builderColors = {
   seat: { fill: "#27272a", stroke: "#52525b" },
   selected: { fill: "#ef4444", stroke: "#fca5a5" },
 };
+
+export const canvasChrome = {
+  background: "#0A0A0B",
+  labelPrimary: "#ffffff",
+  labelSecondary: "#a1a1aa",
+};

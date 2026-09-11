@@ -335,7 +335,7 @@ export default function CheckoutPage() {
 
   if (error && (!event || !tier)) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 text-red-600">{error}</main>
+      <main className="mx-auto max-w-5xl px-4 py-8 text-brand-400">{error}</main>
     );
   }
 
@@ -372,25 +372,6 @@ export default function CheckoutPage() {
             />
           </div>
         )}
-
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-zinc-800" />
-            Available
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-perk-500" />
-            Held by someone else
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-brand-500" />
-            Held by you
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-zinc-600" />
-            Sold
-          </span>
-        </div>
 
         {hold && (
           <Card className="mt-6 flex flex-wrap items-center justify-between gap-4">

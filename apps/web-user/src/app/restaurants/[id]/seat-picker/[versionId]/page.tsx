@@ -207,7 +207,7 @@ export default function SeatPickerPage() {
 
   if (error && !snapshot) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 text-red-600">{error}</main>
+      <main className="mx-auto max-w-5xl px-4 py-8 text-brand-400">{error}</main>
     );
   }
 
@@ -223,7 +223,7 @@ export default function SeatPickerPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-6 rounded-lg border border-brand-300 bg-brand-50 p-4 text-sm text-brand-700">
+      <div className="mb-6 border border-brand-800 bg-brand-600/10 p-4 text-sm text-brand-300">
         Preview — full ticket checkout arrives in a later phase. This
         demonstrates the seat hold mechanism only.
       </div>
@@ -232,7 +232,7 @@ export default function SeatPickerPage() {
         {snapshot.name}
       </h1>
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-brand-400">{error}</p>}
 
       <div className="mt-4 overflow-x-auto border border-zinc-800 bg-surface-raised p-2">
         <SeatMapCanvas
@@ -241,25 +241,6 @@ export default function SeatPickerPage() {
           mode="picker"
           onSeatClick={handleSeatClick}
         />
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-zinc-800" />
-          Available
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-perk-500" />
-          Held by someone else
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-brand-500" />
-          Held by you
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-zinc-600" />
-          Sold
-        </span>
       </div>
 
       {hold && (

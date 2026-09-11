@@ -170,6 +170,20 @@ export default function SeatMapBuilderPage() {
     }
   }
 
+  async function updateSelectedTable(shape: TableShape, capacity: number) {
+    if (!selectedTableId) return;
+    setError(null);
+    try {
+      await apiFetch(`/tables/${selectedTableId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ shape, capacity }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update table");
+    }
+  }
+
   async function addSeatsToSelectedTable(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedTableId || !definition) return;
@@ -419,6 +433,39 @@ export default function SeatMapBuilderPage() {
                       Table {selectedTable.tableNumber} — {selectedTable.seats.length}{" "}
                       seat(s) so far
                     </p>
+                    <div className="mb-3 flex items-end gap-2 border-b border-zinc-800 pb-3">
+                      <label className="flex flex-1 flex-col gap-1 text-xs text-zinc-500">
+                        Shape
+                        <select
+                          className="rounded-none border border-zinc-700 bg-black/40 px-2 py-1.5 text-sm text-white"
+                          value={selectedTable.shape}
+                          onChange={(e) =>
+                            updateSelectedTable(
+                              e.target.value as TableShape,
+                              selectedTable.capacity,
+                            )
+                          }
+                        >
+                          <option value={TableShape.RECT}>Rectangle</option>
+                          <option value={TableShape.CIRCLE}>Circle</option>
+                        </select>
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs text-zinc-500">
+                        Capacity
+                        <input
+                          type="number"
+                          min={1}
+                          className="w-20 rounded-none border border-zinc-700 bg-black/40 px-2 py-1.5 text-sm text-white"
+                          value={selectedTable.capacity}
+                          onChange={(e) =>
+                            updateSelectedTable(
+                              selectedTable.shape,
+                              Number(e.target.value),
+                            )
+                          }
+                        />
+                      </label>
+                    </div>
                     <form onSubmit={addSeatsToSelectedTable} className="flex flex-col gap-2">
                       <input
                         type="number"

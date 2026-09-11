@@ -170,7 +170,7 @@ export function NotificationBell() {
                   disabled={markingId === notification.id}
                   onClick={() => markRead(notification)}
                   className={`flex w-full flex-col gap-0.5 border-b border-zinc-800 px-3 py-2 text-left last:border-b-0 hover:bg-zinc-900 disabled:cursor-not-allowed ${
-                    notification.readAt ? "bg-surface-raised" : "bg-brand-50"
+                    notification.readAt ? "" : "bg-brand-600/10"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
