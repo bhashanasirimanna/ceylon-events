@@ -1,74 +1,62 @@
+// "Event poster" design language: dark, editorial, single-accent.
+// One brand accent (red) carries all emphasis/interaction; amber and
+// emerald are semantic secondaries, never decorative — amber always
+// means "perk/reward/promo", emerald always means "trust/validity".
 export const colors = {
   brand: {
-    50: "#f5f3ff",
-    100: "#ede9fe",
-    200: "#ddd6fe",
-    300: "#c4b5fd",
-    400: "#a78bfa",
-    500: "#8b5cf6",
-    600: "#7c3aed",
-    700: "#6d28d9",
-    800: "#5b21b6",
-    900: "#4c1d95",
+    50: "#fef2f2",
+    100: "#fee2e2",
+    200: "#fecaca",
+    300: "#fca5a5",
+    400: "#f87171",
+    500: "#ef4444",
+    600: "#dc2626",
+    700: "#b91c1c",
+    800: "#991b1b",
+    900: "#7f1d1d",
   },
-  accent: {
-    50: "#fdf2f8",
-    100: "#fce7f3",
-    200: "#fbcfe8",
-    300: "#f9a8d4",
-    400: "#f472b6",
-    500: "#ec4899",
-    600: "#db2777",
-    700: "#be185d",
-    800: "#9d174d",
-    900: "#831843",
+  // Perks/rewards/promo — offers, promo codes. Never used decoratively.
+  perk: {
+    100: "#fef3c7",
+    300: "#fcd34d",
+    500: "#f59e0b",
+    700: "#b45309",
   },
-  neutral: {
-    0: "#ffffff",
-    50: "#f8fafc",
-    100: "#f1f5f9",
-    300: "#cbd5e1",
-    500: "#64748b",
-    700: "#334155",
-    900: "#0f172a",
-    950: "#0b0716",
+  // Trust/validity — a scanned ticket that's genuinely valid. Never
+  // used decoratively.
+  trust: {
+    100: "#d1fae5",
+    300: "#6ee7b7",
+    500: "#10b981",
+    700: "#047857",
   },
-  night: {
-    700: "#241b3a",
-    800: "#1a1230",
-    900: "#120c22",
+  // 4-step elevation ladder. Adjacent <section>s alternate base/alt;
+  // raised is for cards/modals; footer is footer-only.
+  surface: {
+    base: "#0A0A0B",
+    alt: "#0C0C0E",
+    raised: "#141416",
+    footer: "#1C1C1C",
   },
-  success: "#16a34a",
-  warning: "#d97706",
-  danger: "#dc2626",
+  white: "#ffffff",
 } as const;
 
-/** Curated swatches for ColorPicker — drawn from the palette above so
- * anything picked there always renders on-brand. */
+/** Curated swatches for ColorPicker — every one is a real token above,
+ * never an arbitrary hex, so anything picked always renders on-brand. */
 export const paletteSwatches = [
   colors.brand[600],
   colors.brand[400],
-  colors.accent[600],
-  colors.accent[400],
-  "#f97316", // warm amber, the gradient's third stop
-  colors.success,
-  colors.warning,
-  colors.danger,
-  colors.neutral[500],
-  colors.neutral[900],
+  colors.perk[500],
+  colors.perk[300],
+  colors.trust[500],
+  colors.trust[300],
+  "#a1a1aa", // zinc-400 — the neutral option
+  "#ffffff",
 ] as const;
 
-export const gradients = {
-  party: `linear-gradient(135deg, ${colors.brand[600]} 0%, ${colors.accent[500]} 60%, #f97316 100%)`,
-  partySoft: `linear-gradient(135deg, ${colors.brand[50]} 0%, ${colors.accent[50]} 100%)`,
-  night: `linear-gradient(160deg, ${colors.night[900]} 0%, ${colors.night[700]} 100%)`,
-} as const;
-
 export const radii = {
-  sm: "4px",
-  md: "8px",
-  lg: "16px",
-  pill: "9999px",
+  none: "0px",
+  full: "9999px",
 } as const;
 
 export const spacing = {

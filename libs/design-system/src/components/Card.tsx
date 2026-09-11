@@ -1,15 +1,16 @@
 import type { HTMLAttributes } from "react";
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  /** A pulsing accent glow for a just-completed success state (e.g. a
-   * confirmed order, a redeemed offer) — draws the eye without a modal. */
+  /** Border-colorizes to the brand accent with a glow — this system's
+   * one emphasis mechanic, reused for "just confirmed" success states,
+   * a featured event, or a selected seat/tier. */
   glow?: boolean;
 }
 
 export function Card({ className = "", glow = false, ...props }: CardProps) {
   return (
     <div
-      className={`rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow duration-150 hover:shadow-md ${glow ? "animate-glow" : ""} ${className}`}
+      className={`rounded-none border border-zinc-800 bg-surface-raised p-4 transition-colors duration-150 ${glow ? "border-brand-500 shadow-glow-accent" : ""} ${className}`}
       {...props}
     />
   );

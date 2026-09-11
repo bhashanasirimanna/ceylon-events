@@ -124,7 +124,7 @@ export function ImageUploader({
         {urls.map((url, index) => (
           <div
             key={url}
-            className="group relative h-24 w-24 overflow-hidden rounded-md border border-neutral-200"
+            className="group relative h-24 w-24 overflow-hidden rounded-none border border-zinc-800"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -165,7 +165,7 @@ export function ImageUploader({
               </div>
             </div>
             {index === 0 && (
-              <span className="absolute left-1 top-1 rounded-pill bg-brand-600/90 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              <span className="absolute left-1 top-1 rounded-none bg-brand-600/90 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-widest text-white">
                 Cover
               </span>
             )}
@@ -177,7 +177,7 @@ export function ImageUploader({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={isUploading}
-            className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-neutral-300 text-neutral-400 transition-colors hover:border-brand-400 hover:text-brand-500 disabled:opacity-50"
+            className="flex h-24 w-24 flex-col items-center justify-center gap-1 rounded-none border-2 border-dashed border-zinc-700 text-zinc-500 transition-colors hover:border-brand-500 hover:text-brand-500 disabled:opacity-50"
           >
             <span className="text-2xl leading-none">+</span>
             <span className="text-[10px]">
