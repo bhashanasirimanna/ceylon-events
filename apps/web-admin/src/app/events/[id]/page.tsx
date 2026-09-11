@@ -371,10 +371,10 @@ export default function EventManagePage() {
     <>
       <Nav />
       <main className="mx-auto max-w-3xl px-6 py-10">
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
 
         {!event ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
           <>
             <div className="mb-6">
@@ -392,11 +392,11 @@ export default function EventManagePage() {
                 <img
                   src={event.bannerImageUrl}
                   alt=""
-                  className="mb-3 h-40 w-full rounded-md object-cover"
+                  className="mb-3 h-40 w-full rounded-none object-cover"
                 />
               )}
               <div className="mb-3">
-                <span className="mb-1 block text-xs font-medium text-neutral-500">
+                <span className="mb-1 block text-xs font-medium text-zinc-500">
                   Cover image
                 </span>
                 <ImageUploader
@@ -409,7 +409,7 @@ export default function EventManagePage() {
               </div>
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold text-neutral-900">
+                  <h1 className="text-lg font-semibold text-white">
                     {event.title}
                   </h1>
                   <Badge tone={STATUS_TONE[event.status]}>{event.status}</Badge>
@@ -447,11 +447,11 @@ export default function EventManagePage() {
 
               {!editing ? (
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-zinc-500">
                     {new Date(event.startsAt).toLocaleString()}
                   </p>
                   {event.description && (
-                    <p className="text-sm text-neutral-700">
+                    <p className="text-sm text-zinc-300">
                       {event.description}
                     </p>
                   )}
@@ -465,20 +465,20 @@ export default function EventManagePage() {
               ) : (
                 <form onSubmit={saveEdit} className="flex flex-col gap-3">
                   <input
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     required
                   />
                   <textarea
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     rows={3}
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
                   />
                   <input
                     type="datetime-local"
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={editStartsAt}
                     onChange={(e) => setEditStartsAt(e.target.value)}
                     required
@@ -499,29 +499,29 @@ export default function EventManagePage() {
               )}
             </Card>
 
-            <h2 className="mb-3 font-medium text-neutral-900">
+            <h2 className="mb-3 font-medium text-white">
               Ticket tiers
             </h2>
 
             <div className="mb-6 flex flex-col gap-3">
               {tiers.length === 0 && (
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-zinc-500">
                   No ticket tiers yet.
                 </p>
               )}
               {tiers.map((tier) => (
                 <Card key={tier.id} className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-neutral-900">
+                    <h3 className="font-medium text-white">
                       {tier.name}
                     </h3>
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-zinc-500">
                       {tier.currency} {(tier.priceMinorUnits / 100).toFixed(2)}
                       {tier.quantityLimit !== null &&
                         ` · limit ${tier.quantityLimit}`}
                     </p>
                     {(tier.saleStartAt || tier.saleEndAt) && (
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-xs text-zinc-600">
                         Sale window:{" "}
                         {tier.saleStartAt
                           ? new Date(tier.saleStartAt).toLocaleString()
@@ -541,12 +541,12 @@ export default function EventManagePage() {
             </div>
 
             <Card>
-              <h3 className="mb-3 font-medium text-neutral-900">
+              <h3 className="mb-3 font-medium text-white">
                 + Add ticket tier
               </h3>
               <form onSubmit={createTier} className="flex flex-col gap-3">
                 <input
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                   placeholder="Name (e.g. General, VIP)"
                   value={tierName}
                   onChange={(e) => setTierName(e.target.value)}
@@ -557,14 +557,14 @@ export default function EventManagePage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    className="w-2/3 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-2/3 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder="Price"
                     value={tierPrice}
                     onChange={(e) => setTierPrice(e.target.value)}
                     required
                   />
                   <input
-                    className="w-1/3 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/3 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder="Currency"
                     value={tierCurrency}
                     onChange={(e) => setTierCurrency(e.target.value)}
@@ -573,20 +573,20 @@ export default function EventManagePage() {
                   />
                 </div>
                 <div className="flex gap-3">
-                  <label className="flex w-1/2 flex-col gap-1 text-xs text-neutral-500">
+                  <label className="flex w-1/2 flex-col gap-1 text-xs text-zinc-500">
                     Sale starts (optional)
                     <input
                       type="datetime-local"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       value={tierSaleStart}
                       onChange={(e) => setTierSaleStart(e.target.value)}
                     />
                   </label>
-                  <label className="flex w-1/2 flex-col gap-1 text-xs text-neutral-500">
+                  <label className="flex w-1/2 flex-col gap-1 text-xs text-zinc-500">
                     Sale ends (optional)
                     <input
                       type="datetime-local"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       value={tierSaleEnd}
                       onChange={(e) => setTierSaleEnd(e.target.value)}
                     />
@@ -595,7 +595,7 @@ export default function EventManagePage() {
                 <input
                   type="number"
                   min="1"
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                   placeholder="Quantity limit (optional)"
                   value={tierQuantityLimit}
                   onChange={(e) => setTierQuantityLimit(e.target.value)}
@@ -606,18 +606,18 @@ export default function EventManagePage() {
               </form>
             </Card>
 
-            <h2 className="mb-3 mt-8 font-medium text-neutral-900">Offers</h2>
+            <h2 className="mb-3 mt-8 font-medium text-white">Offers</h2>
 
             <div className="mb-6 flex flex-col gap-3">
               {offers.length === 0 && (
-                <p className="text-sm text-neutral-500">No offers yet.</p>
+                <p className="text-sm text-zinc-500">No offers yet.</p>
               )}
               {offers.map((offer) => (
                 <Card key={offer.id}>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-neutral-900">
+                        <h3 className="font-medium text-white">
                           {offer.name}
                         </h3>
                         <Badge tone="success">
@@ -626,11 +626,11 @@ export default function EventManagePage() {
                         <Badge tone="neutral">{formatRedemption(offer)}</Badge>
                       </div>
                       {offer.description && (
-                        <p className="text-sm text-neutral-500">
+                        <p className="text-sm text-zinc-500">
                           {offer.description}
                         </p>
                       )}
-                      <p className="text-xs text-neutral-400">
+                      <p className="text-xs text-zinc-600">
                         Tiers:{" "}
                         {offer.ticketTierIds
                           .map(
@@ -652,7 +652,7 @@ export default function EventManagePage() {
                     </div>
                   </div>
                   {offerRedemptions[offer.id] && (
-                    <div className="mt-3 border-t border-neutral-200 pt-3 text-sm text-neutral-600">
+                    <div className="mt-3 border-t border-zinc-800 pt-3 text-sm text-zinc-400">
                       {offerRedemptions[offer.id].length === 0 ? (
                         <p>No redemptions yet.</p>
                       ) : (
@@ -671,17 +671,17 @@ export default function EventManagePage() {
             </div>
 
             <Card className="mb-8">
-              <h3 className="mb-3 font-medium text-neutral-900">+ Add offer</h3>
+              <h3 className="mb-3 font-medium text-white">+ Add offer</h3>
               <form onSubmit={createOffer} className="flex flex-col gap-3">
                 <input
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                   placeholder="Name (e.g. Unlimited Beer)"
                   value={offerName}
                   onChange={(e) => setOfferName(e.target.value)}
                   required
                 />
                 <textarea
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                   rows={2}
                   placeholder="Description (optional)"
                   value={offerDescription}
@@ -689,7 +689,7 @@ export default function EventManagePage() {
                 />
                 <div className="flex gap-3">
                   <select
-                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={offerDiscountType}
                     onChange={(e) =>
                       setOfferDiscountType(e.target.value as DiscountType)
@@ -704,7 +704,7 @@ export default function EventManagePage() {
                       type="number"
                       step={offerDiscountType === DiscountType.FIXED ? "0.01" : "1"}
                       min="0"
-                      className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder={
                         offerDiscountType === DiscountType.PERCENTAGE
                           ? "% off"
@@ -718,7 +718,7 @@ export default function EventManagePage() {
                 </div>
                 <div className="flex gap-3">
                   <select
-                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={offerRedemptionType}
                     onChange={(e) =>
                       setOfferRedemptionType(e.target.value as RedemptionType)
@@ -732,7 +732,7 @@ export default function EventManagePage() {
                     <input
                       type="number"
                       min="1"
-                      className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="Max uses per ticket"
                       value={offerRedemptionCap}
                       onChange={(e) => setOfferRedemptionCap(e.target.value)}
@@ -741,14 +741,14 @@ export default function EventManagePage() {
                   )}
                 </div>
                 <div>
-                  <p className="mb-1 text-xs text-neutral-500">
+                  <p className="mb-1 text-xs text-zinc-500">
                     Applies to ticket tiers:
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {tiers.map((tier) => (
                       <label
                         key={tier.id}
-                        className="flex items-center gap-1 text-sm text-neutral-700"
+                        className="flex items-center gap-1 text-sm text-zinc-300"
                       >
                         <input
                           type="checkbox"
@@ -759,7 +759,7 @@ export default function EventManagePage() {
                       </label>
                     ))}
                     {tiers.length === 0 && (
-                      <p className="text-sm text-neutral-400">
+                      <p className="text-sm text-zinc-600">
                         Add a ticket tier first.
                       </p>
                     )}
@@ -771,11 +771,11 @@ export default function EventManagePage() {
               </form>
             </Card>
 
-            <h2 className="mb-3 font-medium text-neutral-900">Promo codes</h2>
+            <h2 className="mb-3 font-medium text-white">Promo codes</h2>
 
             <div className="mb-6 flex flex-col gap-3">
               {promoCodes.length === 0 && (
-                <p className="text-sm text-neutral-500">No promo codes yet.</p>
+                <p className="text-sm text-zinc-500">No promo codes yet.</p>
               )}
               {promoCodes.map((promo) => (
                 <Card
@@ -784,14 +784,14 @@ export default function EventManagePage() {
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-mono font-medium text-neutral-900">
+                      <h3 className="font-mono font-medium text-white">
                         {promo.code}
                       </h3>
                       <Badge tone={promo.isActive ? "success" : "danger"}>
                         {promo.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-zinc-500">
                       {formatDiscount(promo.discountType, promo.discountValue)}
                       {promo.applicableTicketTierId
                         ? ` · ${
@@ -800,7 +800,7 @@ export default function EventManagePage() {
                           } only`
                         : " · order-wide"}
                     </p>
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-zinc-600">
                       Used {promo.usageCount}
                       {promo.usageLimit !== null ? ` / ${promo.usageLimit}` : ""}
                       {promo.expiresAt &&
@@ -815,12 +815,12 @@ export default function EventManagePage() {
             </div>
 
             <Card>
-              <h3 className="mb-3 font-medium text-neutral-900">
+              <h3 className="mb-3 font-medium text-white">
                 + Add promo code
               </h3>
               <form onSubmit={createPromoCode} className="flex flex-col gap-3">
                 <input
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm uppercase"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500 uppercase"
                   placeholder="Code (e.g. EARLY20)"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
@@ -828,7 +828,7 @@ export default function EventManagePage() {
                 />
                 <div className="flex gap-3">
                   <select
-                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={promoDiscountType}
                     onChange={(e) =>
                       setPromoDiscountType(e.target.value as DiscountType)
@@ -841,7 +841,7 @@ export default function EventManagePage() {
                     type="number"
                     step={promoDiscountType === DiscountType.FIXED ? "0.01" : "1"}
                     min="0"
-                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder={
                       promoDiscountType === DiscountType.PERCENTAGE
                         ? "% off"
@@ -853,7 +853,7 @@ export default function EventManagePage() {
                   />
                 </div>
                 <select
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                   value={promoTierId}
                   onChange={(e) => setPromoTierId(e.target.value)}
                 >
@@ -868,14 +868,14 @@ export default function EventManagePage() {
                   <input
                     type="number"
                     min="1"
-                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder="Usage limit (optional)"
                     value={promoUsageLimit}
                     onChange={(e) => setPromoUsageLimit(e.target.value)}
                   />
                   <input
                     type="datetime-local"
-                    className="w-1/2 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="w-1/2 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={promoExpiresAt}
                     onChange={(e) => setPromoExpiresAt(e.target.value)}
                   />
@@ -886,54 +886,54 @@ export default function EventManagePage() {
               </form>
             </Card>
 
-            <h2 className="mb-3 mt-8 font-medium text-neutral-900">Report</h2>
+            <h2 className="mb-3 mt-8 font-medium text-white">Report</h2>
             {reportError && (
-              <p className="mb-4 text-sm text-red-600">{reportError}</p>
+              <p className="mb-4 text-sm text-brand-400">{reportError}</p>
             )}
             {report === null ? (
               !reportError && (
-                <p className="text-sm text-neutral-500">Loading…</p>
+                <p className="text-sm text-zinc-500">Loading…</p>
               )
             ) : (
               <Card>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <div>
-                    <p className="text-xs text-neutral-500">Tickets sold</p>
-                    <p className="text-lg font-semibold text-neutral-900">
+                    <p className="text-xs text-zinc-500">Tickets sold</p>
+                    <p className="text-lg font-semibold text-white">
                       {report.ticketsSold}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-500">Revenue</p>
-                    <p className="text-lg font-semibold text-neutral-900">
+                    <p className="text-xs text-zinc-500">Revenue</p>
+                    <p className="text-lg font-semibold text-white">
                       {report.currency}{" "}
                       {(report.revenueMinorUnits / 100).toFixed(2)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-neutral-500">Rating</p>
-                    <p className="text-lg font-semibold text-neutral-900">
+                    <p className="text-xs text-zinc-500">Rating</p>
+                    <p className="text-lg font-semibold text-white">
                       {report.ratingSummary.average !== null
                         ? `${report.ratingSummary.average.toFixed(1)} ★`
                         : "—"}{" "}
-                      <span className="text-xs font-normal text-neutral-500">
+                      <span className="text-xs font-normal text-zinc-500">
                         ({report.ratingSummary.count})
                       </span>
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 border-t border-neutral-200 pt-4">
-                  <h3 className="mb-2 text-sm font-medium text-neutral-900">
+                <div className="mt-4 border-t border-zinc-800 pt-4">
+                  <h3 className="mb-2 text-sm font-medium text-white">
                     Ticket tier breakdown
                   </h3>
                   {report.tierBreakdown.length === 0 ? (
-                    <p className="text-sm text-neutral-500">No sales yet.</p>
+                    <p className="text-sm text-zinc-500">No sales yet.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="text-xs text-neutral-500">
+                          <tr className="text-xs text-zinc-500">
                             <th className="pb-2 font-medium">Tier</th>
                             <th className="pb-2 font-medium">Sold</th>
                             <th className="pb-2 font-medium">Revenue</th>
@@ -943,7 +943,7 @@ export default function EventManagePage() {
                           {report.tierBreakdown.map((tier) => (
                             <tr
                               key={tier.ticketTierId}
-                              className="border-t border-neutral-100"
+                              className="border-t border-zinc-800"
                             >
                               <td className="py-2">{tier.ticketTierName}</td>
                               <td className="py-2">{tier.sold}</td>
@@ -959,19 +959,19 @@ export default function EventManagePage() {
                   )}
                 </div>
 
-                <div className="mt-4 border-t border-neutral-200 pt-4">
-                  <h3 className="mb-2 text-sm font-medium text-neutral-900">
+                <div className="mt-4 border-t border-zinc-800 pt-4">
+                  <h3 className="mb-2 text-sm font-medium text-white">
                     Food item summary
                   </h3>
                   {report.foodItemSummary.length === 0 ? (
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-zinc-500">
                       No food pre-orders yet.
                     </p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead>
-                          <tr className="text-xs text-neutral-500">
+                          <tr className="text-xs text-zinc-500">
                             <th className="pb-2 font-medium">Item</th>
                             <th className="pb-2 font-medium">Quantity</th>
                           </tr>
@@ -980,7 +980,7 @@ export default function EventManagePage() {
                           {report.foodItemSummary.map((item) => (
                             <tr
                               key={item.menuItemId}
-                              className="border-t border-neutral-100"
+                              className="border-t border-zinc-800"
                             >
                               <td className="py-2">{item.menuItemName}</td>
                               <td className="py-2">{item.totalQuantity}</td>

@@ -80,85 +80,85 @@ export default function NewRestaurantPage() {
       <Nav />
       <main className="mx-auto max-w-lg px-6 py-10">
         <Card>
-          <h1 className="mb-4 text-lg font-semibold text-neutral-900">
+          <h1 className="mb-4 text-lg font-semibold text-white">
             New Restaurant
           </h1>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Name
               <input
                 required
                 value={form.name}
                 onChange={(e) => update("name", e.target.value)}
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Description
               <textarea
                 value={form.description}
                 onChange={(e) => update("description", e.target.value)}
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Address
               <input
                 required
                 value={form.address}
                 onChange={(e) => update("address", e.target.value)}
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Contact email
               <input
                 type="email"
                 required
                 value={form.contactEmail}
                 onChange={(e) => update("contactEmail", e.target.value)}
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Contact phone
               <input
                 value={form.contactPhone}
                 onChange={(e) => update("contactPhone", e.target.value)}
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </label>
 
-            <div className="mt-2 border-t border-neutral-100 pt-3">
-              <p className="mb-2 text-sm font-medium text-neutral-900">
+            <div className="mt-2 border-t border-zinc-800 pt-3">
+              <p className="mb-2 text-sm font-medium text-white">
                 Restaurant owner
               </p>
-              <p className="mb-3 text-xs text-neutral-500">
+              <p className="mb-3 text-xs text-zinc-500">
                 They&apos;ll get an email with a link to set their password
                 and activate their web-restaurant login.
               </p>
-              <label className="flex flex-col gap-1 text-sm text-neutral-700">
+              <label className="flex flex-col gap-1 text-sm text-zinc-300">
                 Owner full name
                 <input
                   required
                   value={ownerFullName}
                   onChange={(e) => setOwnerFullName(e.target.value)}
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                 />
               </label>
-              <label className="mt-3 flex flex-col gap-1 text-sm text-neutral-700">
+              <label className="mt-3 flex flex-col gap-1 text-sm text-zinc-300">
                 Owner email
                 <input
                   type="email"
                   required
                   value={ownerEmail}
                   onChange={(e) => setOwnerEmail(e.target.value)}
-                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                  className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                 />
               </label>
             </div>
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-brand-400">{error}</p>}
             <Button type="submit" disabled={submitting}>
               {submitting ? "Creating…" : "Create restaurant"}
             </Button>

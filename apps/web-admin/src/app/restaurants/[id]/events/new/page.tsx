@@ -110,7 +110,7 @@ export default function NewEventPage() {
       <Nav />
       <main className="mx-auto max-w-lg px-6 py-10">
         <div className="mb-6">
-          <h1 className="text-lg font-semibold text-neutral-900">
+          <h1 className="text-lg font-semibold text-white">
             New event
           </h1>
           <Link
@@ -123,29 +123,29 @@ export default function NewEventPage() {
 
         <Card>
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-brand-400">{error}</p>}
 
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Title
               <input
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Description
               <textarea
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Cover image
               <ImageUploader
                 category="event-banner"
@@ -156,21 +156,21 @@ export default function NewEventPage() {
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Starts at
               <input
                 type="datetime-local"
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
                 required
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+            <label className="flex flex-col gap-1 text-sm text-zinc-300">
               Seat map
               <select
-                className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                 value={selectedSeatMapId}
                 onChange={(e) => setSelectedSeatMapId(e.target.value)}
               >
@@ -186,7 +186,7 @@ export default function NewEventPage() {
             </label>
 
             {selectedSeatMapId !== NO_SEAT_MAP && (
-              <label className="flex flex-col gap-1 text-sm text-neutral-700">
+              <label className="flex flex-col gap-1 text-sm text-zinc-300">
                 Published version
                 {versions.length === 0 ? (
                   <p className="text-sm text-amber-600">
@@ -195,7 +195,7 @@ export default function NewEventPage() {
                   </p>
                 ) : (
                   <select
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={selectedVersionId}
                     onChange={(e) => setSelectedVersionId(e.target.value)}
                   >

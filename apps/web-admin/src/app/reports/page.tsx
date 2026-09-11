@@ -14,8 +14,8 @@ const ADMIN_ROLES = new Set<string>([UserRole.SUPER_ADMIN, UserRole.ADMIN]);
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <Card>
-      <p className="text-sm text-neutral-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-neutral-900">{value}</p>
+      <p className="text-sm text-zinc-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
     </Card>
   );
 }
@@ -57,7 +57,7 @@ export default function PlatformReportsPage() {
         <Nav />
         <main className="mx-auto max-w-3xl px-6 py-10">
           <Card>
-            <p className="text-sm text-neutral-700">
+            <p className="text-sm text-zinc-300">
               You do not have permission to view platform reports.
             </p>
           </Card>
@@ -70,14 +70,14 @@ export default function PlatformReportsPage() {
     <>
       <Nav />
       <main className="mx-auto max-w-4xl px-6 py-10">
-        <h1 className="mb-6 text-lg font-semibold text-neutral-900">
+        <h1 className="mb-6 text-lg font-semibold text-white">
           Platform reports
         </h1>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
 
         {totals === null ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard label="Total orders" value={String(totals.totalOrders)} />

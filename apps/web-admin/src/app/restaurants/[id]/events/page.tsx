@@ -132,7 +132,7 @@ export default function RestaurantEventsPage() {
       <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-neutral-900">Events</h1>
+            <h1 className="text-lg font-semibold text-white">Events</h1>
             <Link
               href="/restaurants"
               className="text-sm text-brand-600 hover:underline"
@@ -145,12 +145,12 @@ export default function RestaurantEventsPage() {
           </Link>
         </div>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
 
         {events === null ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : events.length === 0 ? (
-          <p className="text-sm text-neutral-500">No events yet.</p>
+          <p className="text-sm text-zinc-500">No events yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {events.map((event) => (
@@ -160,14 +160,14 @@ export default function RestaurantEventsPage() {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="font-medium text-neutral-900">
+                    <h2 className="font-medium text-white">
                       {event.title}
                     </h2>
                     <Badge tone={STATUS_TONE[event.status]}>
                       {event.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-zinc-500">
                     {new Date(event.startsAt).toLocaleString()}
                   </p>
                 </div>
@@ -200,40 +200,40 @@ export default function RestaurantEventsPage() {
           </div>
         )}
 
-        <h2 className="mb-3 mt-10 font-medium text-neutral-900">Report</h2>
+        <h2 className="mb-3 mt-10 font-medium text-white">Report</h2>
         {reportError && (
-          <p className="mb-4 text-sm text-red-600">{reportError}</p>
+          <p className="mb-4 text-sm text-brand-400">{reportError}</p>
         )}
         {report === null ? (
-          !reportError && <p className="text-sm text-neutral-500">Loading…</p>
+          !reportError && <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
           <Card className="mb-8">
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
-                <p className="text-xs text-neutral-500">Events</p>
-                <p className="text-lg font-semibold text-neutral-900">
+                <p className="text-xs text-zinc-500">Events</p>
+                <p className="text-lg font-semibold text-white">
                   {report.eventCount}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500">Tickets sold</p>
-                <p className="text-lg font-semibold text-neutral-900">
+                <p className="text-xs text-zinc-500">Tickets sold</p>
+                <p className="text-lg font-semibold text-white">
                   {report.ticketsSold}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500">Revenue</p>
-                <p className="text-lg font-semibold text-neutral-900">
+                <p className="text-xs text-zinc-500">Revenue</p>
+                <p className="text-lg font-semibold text-white">
                   {report.currency} {(report.revenueMinorUnits / 100).toFixed(2)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500">Rating</p>
-                <p className="text-lg font-semibold text-neutral-900">
+                <p className="text-xs text-zinc-500">Rating</p>
+                <p className="text-lg font-semibold text-white">
                   {report.ratingSummary.average !== null
                     ? `${report.ratingSummary.average.toFixed(1)} ★`
                     : "—"}{" "}
-                  <span className="text-xs font-normal text-neutral-500">
+                  <span className="text-xs font-normal text-zinc-500">
                     ({report.ratingSummary.count})
                   </span>
                 </p>
@@ -241,10 +241,10 @@ export default function RestaurantEventsPage() {
             </div>
 
             {report.events.length > 0 && (
-              <div className="mt-4 overflow-x-auto border-t border-neutral-200 pt-4">
+              <div className="mt-4 overflow-x-auto border-t border-zinc-800 pt-4">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="text-xs text-neutral-500">
+                    <tr className="text-xs text-zinc-500">
                       <th className="pb-2 font-medium">Event</th>
                       <th className="pb-2 font-medium">Starts</th>
                       <th className="pb-2 font-medium">Tickets sold</th>
@@ -253,7 +253,7 @@ export default function RestaurantEventsPage() {
                   </thead>
                   <tbody>
                     {report.events.map((ev) => (
-                      <tr key={ev.eventId} className="border-t border-neutral-100">
+                      <tr key={ev.eventId} className="border-t border-zinc-800">
                         <td className="py-2">
                           <Link
                             href={`/events/${ev.eventId}`}
@@ -262,7 +262,7 @@ export default function RestaurantEventsPage() {
                             {ev.eventTitle}
                           </Link>
                         </td>
-                        <td className="py-2 text-neutral-500">
+                        <td className="py-2 text-zinc-500">
                           {new Date(ev.startsAt).toLocaleString()}
                         </td>
                         <td className="py-2">{ev.ticketsSold}</td>
@@ -278,14 +278,14 @@ export default function RestaurantEventsPage() {
           </Card>
         )}
 
-        <h2 className="mb-3 font-medium text-neutral-900">Ratings</h2>
+        <h2 className="mb-3 font-medium text-white">Ratings</h2>
         {ratingsError && (
-          <p className="mb-4 text-sm text-red-600">{ratingsError}</p>
+          <p className="mb-4 text-sm text-brand-400">{ratingsError}</p>
         )}
         {ratings === null ? (
-          !ratingsError && <p className="text-sm text-neutral-500">Loading…</p>
+          !ratingsError && <p className="text-sm text-zinc-500">Loading…</p>
         ) : ratings.length === 0 ? (
-          <p className="text-sm text-neutral-500">No ratings yet.</p>
+          <p className="text-sm text-zinc-500">No ratings yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {ratings.map((rating) => (
@@ -295,18 +295,18 @@ export default function RestaurantEventsPage() {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-neutral-900">
+                    <span className="font-medium text-white">
                       {"★".repeat(rating.stars)}
                       {"☆".repeat(5 - rating.stars)}
                     </span>
                     <Badge tone="neutral">{rating.subjectType}</Badge>
                   </div>
                   {rating.comment && (
-                    <p className="mt-1 text-sm text-neutral-700">
+                    <p className="mt-1 text-sm text-zinc-300">
                       {rating.comment}
                     </p>
                   )}
-                  <p className="mt-1 text-xs text-neutral-400">
+                  <p className="mt-1 text-xs text-zinc-600">
                     {new Date(rating.createdAt).toLocaleString()}
                   </p>
                 </div>

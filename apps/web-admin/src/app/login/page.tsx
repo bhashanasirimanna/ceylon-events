@@ -52,7 +52,7 @@ export default function LoginPage() {
       return (
         <div className="flex min-h-screen items-center justify-center">
           <Card className="max-w-sm text-center">
-            <p className="text-sm text-neutral-700">
+            <p className="text-sm text-zinc-300">
               Signed in as <strong>{user.email}</strong>, but this account
               does not have admin access to the platform console.
             </p>
@@ -63,33 +63,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+    <div className="flex min-h-screen items-center justify-center bg-zinc-900">
       <Card className="w-full max-w-sm">
-        <h1 className="mb-4 bg-party-gradient bg-clip-text text-xl font-bold text-transparent">
+        <h1 className="mb-4 text-xl font-bold text-brand-600">
           Ceylon Events — Admin
         </h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm text-neutral-700">
+          <label className="flex flex-col gap-1 text-sm text-zinc-300">
             Email
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-neutral-700">
+          <label className="flex flex-col gap-1 text-sm text-zinc-300">
             Password
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
             />
           </label>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-brand-400">{error}</p>}
           <Button type="submit" disabled={submitting}>
             {submitting ? "Signing in…" : "Sign in"}
           </Button>

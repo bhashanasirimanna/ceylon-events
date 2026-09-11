@@ -89,7 +89,7 @@ export default function PaymentProofsPage() {
       <Nav />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-neutral-900">
+          <h1 className="text-lg font-semibold text-white">
             Payment proofs
           </h1>
           <div className="flex gap-2">
@@ -105,12 +105,12 @@ export default function PaymentProofsPage() {
           </div>
         </div>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
 
         {proofs === null ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : proofs.length === 0 ? (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zinc-500">
             {filter === PaymentStatus.PENDING
               ? "No payment proofs waiting for review."
               : "No payment proofs match this filter."}
@@ -123,28 +123,28 @@ export default function PaymentProofsPage() {
                   <img
                     src={proof.publicUrl}
                     alt="Payment proof"
-                    className="max-h-64 w-full rounded-md border border-neutral-200 object-contain sm:w-64"
+                    className="max-h-64 w-full rounded-none border border-zinc-800 object-contain sm:w-64"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Badge tone={STATUS_TONE[proof.status]}>
                         {proof.status}
                       </Badge>
-                      <span className="text-xs text-neutral-500">
+                      <span className="text-xs text-zinc-500">
                         {formatDateTime(proof.createdAt)}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm font-mono text-neutral-500">
+                    <p className="mt-2 text-sm font-mono text-zinc-500">
                       Order: {proof.orderId}
                     </p>
-                    <p className="mt-1 text-sm text-neutral-700">
+                    <p className="mt-1 text-sm text-zinc-300">
                       {proof.referenceNote}
                     </p>
 
                     {proof.status === PaymentStatus.PENDING ? (
                       <div className="mt-3 flex flex-col gap-2">
                         <textarea
-                          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                          className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                           rows={2}
                           placeholder="Review notes (optional)"
                           value={notesById[proof.id] ?? ""}
@@ -173,7 +173,7 @@ export default function PaymentProofsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="mt-3 text-sm text-neutral-500">
+                      <div className="mt-3 text-sm text-zinc-500">
                         {proof.reviewedAt && (
                           <p>Reviewed {formatDateTime(proof.reviewedAt)}</p>
                         )}

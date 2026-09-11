@@ -117,7 +117,7 @@ export function NotificationBell() {
       <button
         type="button"
         aria-label="Notifications"
-        className="relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-600 hover:bg-neutral-100"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-800"
         onClick={() => setOpen((prev) => !prev)}
       >
         <svg
@@ -142,9 +142,9 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-neutral-200 bg-white shadow-lg">
-          <div className="flex items-center justify-between border-b border-neutral-200 px-3 py-2">
-            <span className="text-sm font-medium text-neutral-900">
+        <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-zinc-800 bg-surface-raised shadow-lg">
+          <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
+            <span className="text-sm font-medium text-white">
               Notifications
             </span>
             <button
@@ -157,9 +157,9 @@ export function NotificationBell() {
             </button>
           </div>
           <div className="max-h-96 overflow-y-auto">
-            {error && <p className="px-3 py-2 text-xs text-red-600">{error}</p>}
+            {error && <p className="px-3 py-2 text-xs text-brand-400">{error}</p>}
             {notifications.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-neutral-500">
+              <p className="px-3 py-6 text-center text-sm text-zinc-500">
                 No notifications
               </p>
             ) : (
@@ -169,16 +169,16 @@ export function NotificationBell() {
                   type="button"
                   disabled={markingId === notification.id}
                   onClick={() => markRead(notification)}
-                  className={`flex w-full flex-col gap-0.5 border-b border-neutral-100 px-3 py-2 text-left last:border-b-0 hover:bg-neutral-50 disabled:cursor-not-allowed ${
-                    notification.readAt ? "bg-white" : "bg-brand-50"
+                  className={`flex w-full flex-col gap-0.5 border-b border-zinc-800 px-3 py-2 text-left last:border-b-0 hover:bg-zinc-900 disabled:cursor-not-allowed ${
+                    notification.readAt ? "bg-surface-raised" : "bg-brand-50"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span
                       className={`text-sm ${
                         notification.readAt
-                          ? "font-normal text-neutral-700"
-                          : "font-semibold text-neutral-900"
+                          ? "font-normal text-zinc-300"
+                          : "font-semibold text-white"
                       }`}
                     >
                       {notification.title}
@@ -187,8 +187,8 @@ export function NotificationBell() {
                       <span className="h-2 w-2 shrink-0 rounded-full bg-brand-600" />
                     )}
                   </div>
-                  <p className="text-xs text-neutral-500">{notification.body}</p>
-                  <p className="text-[11px] text-neutral-400">
+                  <p className="text-xs text-zinc-500">{notification.body}</p>
+                  <p className="text-[11px] text-zinc-600">
                     {formatRelativeTime(notification.createdAt)}
                   </p>
                 </button>

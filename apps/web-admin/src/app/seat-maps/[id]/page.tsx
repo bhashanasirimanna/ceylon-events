@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Button, Card } from "@ceylon/design-system";
+import { Button, Card, ColorPicker } from "@ceylon/design-system";
 import type { CanvasData } from "@ceylon/seatmap-ui";
 import { TableShape } from "@ceylon/shared-types";
 
@@ -220,22 +220,22 @@ export default function SeatMapBuilderPage() {
       <Nav />
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-neutral-900">
+          <h1 className="text-lg font-semibold text-white">
             {definition?.seatMap.name ?? "Seat map"}
           </h1>
           <Button onClick={publish}>Publish</Button>
         </div>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
         {publishedMessage && (
-          <p className="mb-4 text-sm text-green-700">{publishedMessage}</p>
+          <p className="mb-4 text-sm text-trust-300">{publishedMessage}</p>
         )}
 
         {!canvasData ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
           <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="flex-1 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-2">
+            <div className="flex-1 overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-2">
               <SeatMapCanvas
                 data={canvasData}
                 mode="builder"
@@ -246,12 +246,12 @@ export default function SeatMapBuilderPage() {
 
             <div className="flex w-full flex-col gap-4 lg:w-80">
               <Card>
-                <h2 className="mb-3 text-sm font-medium text-neutral-900">
+                <h2 className="mb-3 text-sm font-medium text-white">
                   + Section
                 </h2>
                 <form onSubmit={createSection} className="flex flex-col gap-2">
                   <input
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder="Name"
                     value={sectionForm.name}
                     onChange={(e) =>
@@ -262,7 +262,7 @@ export default function SeatMapBuilderPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       type="number"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="x"
                       value={sectionForm.x}
                       onChange={(e) =>
@@ -271,7 +271,7 @@ export default function SeatMapBuilderPage() {
                     />
                     <input
                       type="number"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="y"
                       value={sectionForm.y}
                       onChange={(e) =>
@@ -280,7 +280,7 @@ export default function SeatMapBuilderPage() {
                     />
                     <input
                       type="number"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="width"
                       value={sectionForm.width}
                       onChange={(e) =>
@@ -289,7 +289,7 @@ export default function SeatMapBuilderPage() {
                     />
                     <input
                       type="number"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="height"
                       value={sectionForm.height}
                       onChange={(e) =>
@@ -297,14 +297,17 @@ export default function SeatMapBuilderPage() {
                       }
                     />
                   </div>
-                  <input
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
-                    placeholder="Color (optional, e.g. #fde68a)"
-                    value={sectionForm.color}
-                    onChange={(e) =>
-                      setSectionForm({ ...sectionForm, color: e.target.value })
-                    }
-                  />
+                  <div>
+                    <label className="mb-1 block text-xs text-zinc-500">
+                      Section color (optional)
+                    </label>
+                    <ColorPicker
+                      value={sectionForm.color || "#3f3f46"}
+                      onChange={(color) =>
+                        setSectionForm({ ...sectionForm, color })
+                      }
+                    />
+                  </div>
                   <Button type="submit">Add section</Button>
                 </form>
                 {definition && definition.sections.length > 0 && (
@@ -312,11 +315,11 @@ export default function SeatMapBuilderPage() {
                     {definition.sections.map((s) => (
                       <li
                         key={s.id}
-                        className="flex items-center justify-between text-xs text-neutral-600"
+                        className="flex items-center justify-between text-xs text-zinc-400"
                       >
                         {s.name}
                         <button
-                          className="text-red-600 hover:underline"
+                          className="text-brand-400 hover:underline"
                           onClick={() => deleteSection(s.id)}
                         >
                           delete
@@ -328,12 +331,12 @@ export default function SeatMapBuilderPage() {
               </Card>
 
               <Card>
-                <h2 className="mb-3 text-sm font-medium text-neutral-900">
+                <h2 className="mb-3 text-sm font-medium text-white">
                   + Table
                 </h2>
                 <form onSubmit={createTable} className="flex flex-col gap-2">
                   <input
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder="Table number (e.g. T1)"
                     value={tableForm.tableNumber}
                     onChange={(e) =>
@@ -344,7 +347,7 @@ export default function SeatMapBuilderPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       type="number"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="x"
                       value={tableForm.x}
                       onChange={(e) =>
@@ -353,7 +356,7 @@ export default function SeatMapBuilderPage() {
                     />
                     <input
                       type="number"
-                      className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                       placeholder="y"
                       value={tableForm.y}
                       onChange={(e) =>
@@ -362,7 +365,7 @@ export default function SeatMapBuilderPage() {
                     />
                   </div>
                   <select
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={tableForm.shape}
                     onChange={(e) =>
                       setTableForm({
@@ -377,7 +380,7 @@ export default function SeatMapBuilderPage() {
                   <input
                     type="number"
                     min={1}
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     placeholder="Capacity"
                     value={tableForm.capacity}
                     onChange={(e) =>
@@ -385,7 +388,7 @@ export default function SeatMapBuilderPage() {
                     }
                   />
                   <select
-                    className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                     value={tableForm.sectionId}
                     onChange={(e) =>
                       setTableForm({ ...tableForm, sectionId: e.target.value })
@@ -403,16 +406,16 @@ export default function SeatMapBuilderPage() {
               </Card>
 
               <Card>
-                <h2 className="mb-3 text-sm font-medium text-neutral-900">
+                <h2 className="mb-3 text-sm font-medium text-white">
                   + Seats to selected table
                 </h2>
                 {!selectedTable ? (
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-zinc-500">
                     Click a table on the canvas to select it.
                   </p>
                 ) : (
                   <>
-                    <p className="mb-2 text-xs text-neutral-600">
+                    <p className="mb-2 text-xs text-zinc-400">
                       Table {selectedTable.tableNumber} — {selectedTable.seats.length}{" "}
                       seat(s) so far
                     </p>
@@ -420,13 +423,13 @@ export default function SeatMapBuilderPage() {
                       <input
                         type="number"
                         min={1}
-                        className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                        className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                         placeholder="How many seats"
                         value={seatCount}
                         onChange={(e) => setSeatCount(Number(e.target.value))}
                       />
                       <input
-                        className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                        className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
                         placeholder="Label prefix (e.g. A)"
                         value={seatLabelPrefix}
                         onChange={(e) => setSeatLabelPrefix(e.target.value)}
@@ -434,7 +437,7 @@ export default function SeatMapBuilderPage() {
                       <Button type="submit">Add seats (auto-arranged)</Button>
                     </form>
                     <button
-                      className="mt-2 text-xs text-red-600 hover:underline"
+                      className="mt-2 text-xs text-brand-400 hover:underline"
                       onClick={() => deleteTable(selectedTable.id)}
                     >
                       Delete this table
@@ -444,13 +447,13 @@ export default function SeatMapBuilderPage() {
               </Card>
 
               <Card>
-                <h2 className="mb-3 text-sm font-medium text-neutral-900">
+                <h2 className="mb-3 text-sm font-medium text-white">
                   Version history
                 </h2>
                 {versions.length === 0 ? (
-                  <p className="text-xs text-neutral-500">Not published yet.</p>
+                  <p className="text-xs text-zinc-500">Not published yet.</p>
                 ) : (
-                  <ul className="flex flex-col gap-1 text-xs text-neutral-600">
+                  <ul className="flex flex-col gap-1 text-xs text-zinc-400">
                     {versions.map((v) => (
                       <li key={v.id}>
                         v{v.versionNumber} —{" "}

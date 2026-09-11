@@ -26,10 +26,10 @@ export default function DashboardPage() {
       <Nav />
       <main className="mx-auto max-w-3xl px-6 py-10">
         <Card>
-          <h1 className="text-lg font-semibold text-neutral-900">
+          <h1 className="text-lg font-semibold text-white">
             Welcome, {user.fullName}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">{user.email}</p>
+          <p className="mt-1 text-sm text-zinc-500">{user.email}</p>
           <div className="mt-6">
             <Link href="/restaurants">
               <Button>Manage restaurants</Button>

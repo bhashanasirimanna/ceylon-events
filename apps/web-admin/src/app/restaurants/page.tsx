@@ -69,7 +69,7 @@ export default function RestaurantsPage() {
       <Nav />
       <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-neutral-900">
+          <h1 className="text-lg font-semibold text-white">
             Restaurants
           </h1>
           <Link href="/restaurants/new">
@@ -77,29 +77,29 @@ export default function RestaurantsPage() {
           </Link>
         </div>
 
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
 
         {restaurants === null ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : restaurants.length === 0 ? (
-          <p className="text-sm text-neutral-500">No restaurants yet.</p>
+          <p className="text-sm text-zinc-500">No restaurants yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {restaurants.map((restaurant) => (
               <Card key={restaurant.id} className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="font-medium text-neutral-900">
+                    <h2 className="font-medium text-white">
                       {restaurant.name}
                     </h2>
                     <Badge tone={STATUS_TONE[restaurant.status]}>
                       {restaurant.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-zinc-500">
                     {restaurant.address}
                   </p>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-zinc-500">
                     {restaurant.contactEmail}
                   </p>
                 </div>
