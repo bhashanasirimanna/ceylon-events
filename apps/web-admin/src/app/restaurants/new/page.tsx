@@ -18,6 +18,8 @@ export default function NewRestaurantPage() {
     contactEmail: "",
     contactPhone: "",
   });
+  const [ownerFullName, setOwnerFullName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -35,14 +37,35 @@ export default function NewRestaurantPage() {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
+    let restaurant: { id: string };
     try {
-      await apiFetch("/restaurants", {
+      restaurant = await apiFetch<{ id: string }>("/restaurants", {
         method: "POST",
         body: JSON.stringify(form),
       });
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Failed to create restaurant",
+      );
+      setSubmitting(false);
+      return;
+    }
+    try {
+      await apiFetch("/auth/invite-restaurant-owner", {
+        method: "POST",
+        body: JSON.stringify({
+          email: ownerEmail,
+          fullName: ownerFullName,
+          restaurantId: restaurant.id,
+        }),
+      });
       router.push("/restaurants");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to create restaurant");
+      setError(
+        `The restaurant was created, but sending the owner invite failed: ${
+          err instanceof ApiError ? err.message : "unknown error"
+        }`,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -105,6 +128,36 @@ export default function NewRestaurantPage() {
                 className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
               />
             </label>
+
+            <div className="mt-2 border-t border-neutral-100 pt-3">
+              <p className="mb-2 text-sm font-medium text-neutral-900">
+                Restaurant owner
+              </p>
+              <p className="mb-3 text-xs text-neutral-500">
+                They&apos;ll get an email with a link to set their password
+                and activate their web-restaurant login.
+              </p>
+              <label className="flex flex-col gap-1 text-sm text-neutral-700">
+                Owner full name
+                <input
+                  required
+                  value={ownerFullName}
+                  onChange={(e) => setOwnerFullName(e.target.value)}
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="mt-3 flex flex-col gap-1 text-sm text-neutral-700">
+                Owner email
+                <input
+                  type="email"
+                  required
+                  value={ownerEmail}
+                  onChange={(e) => setOwnerEmail(e.target.value)}
+                  className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                />
+              </label>
+            </div>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
             <Button type="submit" disabled={submitting}>
               {submitting ? "Creating…" : "Create restaurant"}

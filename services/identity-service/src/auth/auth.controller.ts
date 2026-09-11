@@ -16,6 +16,8 @@ import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { RefreshDto } from "./dto/refresh.dto";
 import { InviteStaffDto } from "./dto/invite-staff.dto";
+import { InviteRestaurantOwnerDto } from "./dto/invite-restaurant-owner.dto";
+import { AcceptInviteDto } from "./dto/accept-invite.dto";
 import { toUserResponse } from "../users/user-response";
 import { UsersService } from "../users/users.service";
 
@@ -92,5 +94,26 @@ export class AuthController {
     const { user, tempPassword } =
       await this.authService.inviteRestaurantStaff(dto);
     return { user: toUserResponse(user), tempPassword };
+  }
+
+  // Called by web-admin right after creating a new restaurant. Unlike
+  // invite-restaurant-staff, no password ever comes back in the response
+  // — the invitee sets their own via the emailed accept-invite link.
+  @Post("invite-restaurant-owner")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  async inviteRestaurantOwner(@Body() dto: InviteRestaurantOwnerDto) {
+    const { user } = await this.authService.inviteRestaurantOwner(dto);
+    return { user: toUserResponse(user) };
+  }
+
+  // Public: the invitee has no session yet — the invite token itself is
+  // the credential proving they're the one who was emailed.
+  @Post("accept-invite")
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async acceptInvite(@Body() dto: AcceptInviteDto) {
+    const { user, tokens } = await this.authService.acceptInvite(dto);
+    return { user: toUserResponse(user), tokens };
   }
 }

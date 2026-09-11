@@ -1,13 +1,16 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { HttpService } from "@nestjs/axios";
 import { JwtService } from "@nestjs/jwt";
 import { InjectRepository } from "@nestjs/typeorm";
 import * as bcrypt from "bcryptjs";
 import { createHash, randomUUID } from "node:crypto";
+import { firstValueFrom } from "rxjs";
 import ms from "ms";
 import { Repository } from "typeorm";
 import type {
@@ -21,13 +24,22 @@ import { User } from "../users/entities/user.entity";
 import { UsersService } from "../users/users.service";
 
 const SALT_ROUNDS = 10;
+const HTTP_TIMEOUT_MS = 5000;
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  private readonly notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL;
+  private readonly internalSecret = process.env.INTERNAL_SERVICE_SECRET ?? "";
+  private readonly webRestaurantPublicUrl =
+    process.env.WEB_RESTAURANT_PUBLIC_URL ?? "http://localhost:4002";
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokenRepository: Repository<RefreshToken>,
   ) {}
@@ -143,6 +155,93 @@ export class AuthService {
       restaurantId: params.restaurantId,
     });
     return { user, tempPassword };
+  }
+
+  /**
+   * Invites a restaurant's very first owner — no password is ever
+   * generated here (unlike inviteRestaurantStaff's tempPassword): the
+   * account is created inactive with an unusable placeholder password
+   * hash, and only becomes usable once the invitee follows the emailed
+   * link to POST /auth/accept-invite and sets their own password.
+   */
+  async inviteRestaurantOwner(params: {
+    email: string;
+    fullName: string;
+    restaurantId: string;
+  }): Promise<{ user: User; inviteToken: string }> {
+    const existing = await this.usersService.findByEmail(params.email);
+    if (existing) {
+      throw new ConflictException("Email is already registered");
+    }
+    const inviteToken = randomUUID();
+    const placeholderHash = await bcrypt.hash(randomUUID(), SALT_ROUNDS);
+    const user = await this.usersService.createUser({
+      email: params.email,
+      passwordHash: placeholderHash,
+      fullName: params.fullName,
+      roles: [UserRole.RESTAURANT_OWNER],
+      restaurantId: params.restaurantId,
+      isActive: false,
+      inviteToken,
+      inviteTokenExpiresAt: new Date(Date.now() + INVITE_TTL_MS),
+    });
+    this.sendInviteEmail(user.email, user.fullName, inviteToken);
+    return { user, inviteToken };
+  }
+
+  async acceptInvite(params: {
+    token: string;
+    password: string;
+  }): Promise<{ user: User; tokens: AuthTokens }> {
+    const user = await this.usersService.findByInviteToken(params.token);
+    if (
+      !user ||
+      !user.inviteTokenExpiresAt ||
+      user.inviteTokenExpiresAt.getTime() < Date.now()
+    ) {
+      throw new UnauthorizedException("This invite link is invalid or has expired");
+    }
+    user.passwordHash = await bcrypt.hash(params.password, SALT_ROUNDS);
+    user.isActive = true;
+    user.inviteToken = null;
+    user.inviteTokenExpiresAt = null;
+    await this.usersService.save(user);
+    const tokens = await this.issueTokens(user);
+    return { user, tokens };
+  }
+
+  /**
+   * Fire-and-forget: same reasoning as every other notifyBuyer-style
+   * helper in this build (order-service, payment-service, food-order-
+   * service) — a notification-service outage must never block account
+   * creation. The invite still exists and can be resent/looked up even
+   * if the email never arrives.
+   */
+  private sendInviteEmail(
+    email: string,
+    fullName: string,
+    inviteToken: string,
+  ): void {
+    if (!this.notificationServiceUrl) return;
+    const acceptUrl = `${this.webRestaurantPublicUrl}/accept-invite?token=${encodeURIComponent(inviteToken)}`;
+    firstValueFrom(
+      this.httpService.post(
+        `${this.notificationServiceUrl}/internal/email`,
+        {
+          to: email,
+          subject: "You're invited to manage a restaurant on Ceylon Events",
+          html: `<p>Hi ${fullName},</p><p>You've been invited to manage a restaurant on Ceylon Events. Set your password to activate your account:</p><p><a href="${acceptUrl}">${acceptUrl}</a></p><p>This link expires in 7 days.</p>`,
+        },
+        {
+          headers: { "x-internal-secret": this.internalSecret },
+          timeout: HTTP_TIMEOUT_MS,
+        },
+      ),
+    ).catch((error) => {
+      this.logger.warn(
+        `Failed to send invite email to ${email}: ${(error as Error).message}`,
+      );
+    });
   }
 
   private async issueTokens(user: User): Promise<AuthTokens> {

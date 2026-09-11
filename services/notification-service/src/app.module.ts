@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthCommonModule, HealthModule } from "@ceylon/nest-common";
+import { EmailModule } from "./email/email.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 
 @Module({
@@ -18,6 +19,7 @@ import { NotificationsModule } from "./notifications/notifications.module";
     ),
     HealthModule,
     NotificationsModule,
+    EmailModule,
   ],
 })
 export class AppModule {}

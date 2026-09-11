@@ -1,3 +1,4 @@
+import { HttpModule } from "@nestjs/axios";
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { TypeOrmModule } from "@nestjs/typeorm";
@@ -12,6 +13,7 @@ import { AuthService } from "./auth.service";
     UsersModule,
     TypeOrmModule.forFeature([RefreshToken]),
     JwtModule.register({}),
+    HttpModule.register({ timeout: 5000 }),
     // Env vars are populated by Docker/Compose before the process starts,
     // so reading process.env directly here (outside ConfigService) is safe.
     AuthCommonModule.forRoot(

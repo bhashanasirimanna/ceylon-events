@@ -19,12 +19,19 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
+  findByInviteToken(inviteToken: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { inviteToken } });
+  }
+
   async createUser(params: {
     email: string;
     passwordHash: string;
     fullName: string;
     roles?: UserRole[];
     restaurantId?: string | null;
+    isActive?: boolean;
+    inviteToken?: string | null;
+    inviteTokenExpiresAt?: Date | null;
   }): Promise<User> {
     const user = this.usersRepository.create({
       email: params.email,
@@ -32,7 +39,14 @@ export class UsersService {
       fullName: params.fullName,
       roles: params.roles ?? [UserRole.CUSTOMER],
       restaurantId: params.restaurantId ?? null,
+      isActive: params.isActive ?? true,
+      inviteToken: params.inviteToken ?? null,
+      inviteTokenExpiresAt: params.inviteTokenExpiresAt ?? null,
     });
+    return this.usersRepository.save(user);
+  }
+
+  save(user: User): Promise<User> {
     return this.usersRepository.save(user);
   }
 }
