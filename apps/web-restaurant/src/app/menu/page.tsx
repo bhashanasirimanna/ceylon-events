@@ -255,6 +255,9 @@ export default function MenuPage() {
                               <img
                                 src={item.photoUrls[0]}
                                 alt=""
+                                loading="lazy"
+                                width={32}
+                                height={32}
                                 className="h-8 w-8 rounded object-cover"
                               />
                             )}

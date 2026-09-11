@@ -130,6 +130,9 @@ export function ImageUploader({
             <img
               src={url}
               alt={`Photo ${index + 1}`}
+              loading="lazy"
+              width={96}
+              height={96}
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 flex flex-col items-center justify-between bg-black/0 p-1 opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
