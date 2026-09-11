@@ -526,7 +526,7 @@ export default function CheckoutPage() {
 
       <Button
         className="mt-6"
-        variant="primary"
+        variant="party"
         disabled={isPlacing}
         onClick={handlePlaceOrder}
       >

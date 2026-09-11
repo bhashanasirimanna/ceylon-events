@@ -65,7 +65,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-neutral-50">
       <Card className="w-full max-w-sm">
-        <h1 className="mb-4 text-xl font-semibold text-neutral-900">
+        <h1 className="mb-4 bg-party-gradient bg-clip-text text-xl font-bold text-transparent">
           Ceylon Events — Admin
         </h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">

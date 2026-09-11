@@ -49,7 +49,7 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4">
-      <h1 className="mb-6 text-2xl font-semibold text-neutral-900">
+      <h1 className="mb-6 bg-party-gradient bg-clip-text text-2xl font-bold text-transparent">
         Ceylon Events — Restaurant
       </h1>
       <Card>
@@ -79,7 +79,7 @@ export default function LoginPage() {
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" variant="party" disabled={submitting}>
             {submitting ? "Signing in..." : "Sign in"}
           </Button>
         </form>

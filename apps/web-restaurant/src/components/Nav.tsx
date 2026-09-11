@@ -17,7 +17,7 @@ export function Nav() {
   return (
     <nav className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-4">
       <div className="flex items-center gap-6">
-        <span className="text-lg font-semibold text-neutral-900">
+        <span className="bg-party-gradient bg-clip-text text-lg font-bold text-transparent">
           Ceylon Events — Restaurant
         </span>
         <Link href="/" className="text-sm text-neutral-600 hover:text-brand-600">

@@ -55,7 +55,12 @@ export default function LoginPage() {
             />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          <Button
+            type="submit"
+            variant="party"
+            disabled={isSubmitting}
+            className="w-full"
+          >
             {isSubmitting ? "Logging in…" : "Log in"}
           </Button>
         </form>

@@ -29,20 +29,23 @@ export default function HomePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-neutral-900">
-        Discover events at partner restaurants
-      </h1>
-      <p className="mt-1 text-neutral-500">
-        Browse restaurant venues and preview their menus before you book.
-      </p>
+      <div className="rounded-lg bg-night-gradient px-6 py-10 sm:px-10 sm:py-14">
+        <h1 className="bg-party-gradient bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
+          Discover events at partner restaurants
+        </h1>
+        <p className="mt-2 max-w-xl text-neutral-300">
+          Browse restaurant venues, preview their menus, and pre-order your
+          food before you even get there.
+        </p>
 
-      <input
-        type="text"
-        placeholder="Search restaurants by name"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mt-6 w-full max-w-sm rounded-md border border-neutral-300 px-3 py-2 text-sm"
-      />
+        <input
+          type="text"
+          placeholder="Search restaurants by name"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mt-6 w-full max-w-sm rounded-pill border border-white/20 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-neutral-400 focus:border-accent-400 focus:outline-none"
+        />
+      </div>
 
       {isLoading && <p className="mt-8 text-neutral-500">Loading restaurants…</p>}
       {error && <p className="mt-8 text-red-600">{error}</p>}

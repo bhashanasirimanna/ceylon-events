@@ -186,7 +186,7 @@ export default function EventDetailPage() {
                     <Badge tone="neutral">{note}</Badge>
                   ) : (
                     <Link href={`/events/${event.id}/checkout/${tier.id}`}>
-                      <Button variant="primary">Buy</Button>
+                      <Button variant="party">Buy</Button>
                     </Link>
                   )}
                 </div>
