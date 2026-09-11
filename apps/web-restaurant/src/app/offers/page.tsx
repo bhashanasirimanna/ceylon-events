@@ -157,7 +157,7 @@ export default function OffersRedemptionPage() {
   }
 
   if (isLoading || !user) {
-    return <main className="p-6 text-sm text-neutral-500">Loading...</main>;
+    return <main className="p-6 text-sm text-zinc-500">Loading...</main>;
   }
 
   if (!authorized) {
@@ -165,7 +165,7 @@ export default function OffersRedemptionPage() {
       <>
         <Nav />
         <main className="mx-auto max-w-md px-4 py-8">
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zinc-500">
             Offer redemption is only available to restaurant owners and staff.
           </p>
         </main>
@@ -177,10 +177,10 @@ export default function OffersRedemptionPage() {
     <>
       <Nav />
       <main className="mx-auto max-w-md px-4 py-8">
-        <h1 className="mb-2 text-2xl font-semibold text-neutral-900">
+        <h1 className="mb-2 text-2xl font-semibold text-white">
           Offer Redemption
         </h1>
-        <p className="mb-6 text-sm text-neutral-500">
+        <p className="mb-6 text-sm text-zinc-500">
           Scan a ticket&apos;s QR code with a USB scanner (it types into the
           field below like a keyboard) or paste the code manually, then press
           Enter, to see and redeem its bundled perks.
@@ -193,7 +193,7 @@ export default function OffersRedemptionPage() {
             onChange={(e) => setToken(e.target.value)}
             placeholder="Scan or paste ticket code"
             autoFocus
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-3 text-base"
+            className="flex-1 rounded-none border border-zinc-700 bg-black/40 px-3 py-3 text-base text-white placeholder:text-zinc-500"
           />
           <Button type="submit" disabled={isLookingUp || !token.trim()}>
             {isLookingUp ? "Looking up..." : "Look up"}
@@ -201,14 +201,14 @@ export default function OffersRedemptionPage() {
         </form>
 
         {error && (
-          <Card className="mb-4 border-red-200 bg-red-50">
-            <p className="text-sm text-red-800">{error}</p>
+          <Card className="mb-4 border-brand-800 bg-brand-600/10">
+            <p className="text-sm text-brand-300">{error}</p>
           </Card>
         )}
 
         {notice && (
           <Card className="mb-4">
-            <p className="text-sm text-neutral-600">{notice}</p>
+            <p className="text-sm text-zinc-400">{notice}</p>
           </Card>
         )}
 
@@ -219,7 +219,7 @@ export default function OffersRedemptionPage() {
               return (
                 <Card key={offer.id}>
                   <div className="mb-1 flex items-center justify-between">
-                    <h2 className="font-medium text-neutral-900">
+                    <h2 className="font-medium text-white">
                       {offer.name}
                     </h2>
                     <Badge tone="neutral">
@@ -227,19 +227,19 @@ export default function OffersRedemptionPage() {
                     </Badge>
                   </div>
                   {offer.description && (
-                    <p className="mb-1 text-sm text-neutral-600">
+                    <p className="mb-1 text-sm text-zinc-400">
                       {offer.description}
                     </p>
                   )}
                   <p className="text-sm font-medium text-brand-600">
                     {discountSummary(offer)}
                   </p>
-                  <p className="mt-1 text-xs text-neutral-500">
+                  <p className="mt-1 text-xs text-zinc-500">
                     {stateSummary(offer)}
                   </p>
 
                   {cardErrors[offer.id] && (
-                    <p className="mt-2 text-sm text-red-700">
+                    <p className="mt-2 text-sm text-brand-400">
                       {cardErrors[offer.id]}
                     </p>
                   )}

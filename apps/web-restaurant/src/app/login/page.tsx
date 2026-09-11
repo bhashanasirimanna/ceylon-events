@@ -39,7 +39,7 @@ export default function LoginPage() {
     return (
       <main className="mx-auto flex min-h-screen max-w-md items-center justify-center px-4">
         <Card>
-          <p className="text-sm text-neutral-700">
+          <p className="text-sm text-zinc-300">
             This account ({user.email}) has no restaurant access.
           </p>
         </Card>
@@ -49,13 +49,13 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4">
-      <h1 className="mb-6 bg-party-gradient bg-clip-text text-2xl font-bold text-transparent">
+      <h1 className="mb-6 text-2xl font-bold text-brand-600">
         Ceylon Events — Restaurant
       </h1>
       <Card>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
+            <label className="mb-1 block text-sm font-medium text-zinc-300">
               Email
             </label>
             <input
@@ -63,11 +63,11 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-700">
+            <label className="mb-1 block text-sm font-medium text-zinc-300">
               Password
             </label>
             <input
@@ -75,10 +75,10 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-brand-400">{error}</p>}
           <Button type="submit" variant="party" disabled={submitting}>
             {submitting ? "Signing in..." : "Sign in"}
           </Button>

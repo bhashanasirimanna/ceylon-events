@@ -40,25 +40,25 @@ export default function HomePage() {
   }, [isLoading, user, router]);
 
   if (isLoading || !user) {
-    return <main className="p-6 text-sm text-neutral-500">Loading...</main>;
+    return <main className="p-6 text-sm text-zinc-500">Loading...</main>;
   }
 
   return (
     <>
       <Nav />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="mb-4 text-2xl font-semibold text-neutral-900">
+        <h1 className="mb-4 text-2xl font-semibold text-white">
           Welcome, {user.fullName}
         </h1>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-brand-400">{error}</p>}
         {restaurant && (
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-medium text-neutral-900">
+                <h2 className="text-lg font-medium text-white">
                   {restaurant.name}
                 </h2>
-                <p className="text-sm text-neutral-600">{restaurant.address}</p>
+                <p className="text-sm text-zinc-400">{restaurant.address}</p>
               </div>
               <Badge tone={statusTone[restaurant.status]}>
                 {restaurant.status}
@@ -66,7 +66,7 @@ export default function HomePage() {
             </div>
           </Card>
         )}
-        <p className="mt-6 text-sm text-neutral-600">
+        <p className="mt-6 text-sm text-zinc-400">
           Use the Menu tab to manage your categories and items.
         </p>
       </main>

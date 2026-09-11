@@ -267,7 +267,7 @@ export default function FoodOrdersPage() {
   }
 
   if (isLoading || !user) {
-    return <main className="p-6 text-sm text-neutral-500">Loading...</main>;
+    return <main className="p-6 text-sm text-zinc-500">Loading...</main>;
   }
 
   if (!authorized) {
@@ -275,7 +275,7 @@ export default function FoodOrdersPage() {
       <>
         <Nav />
         <main className="mx-auto max-w-md px-4 py-8">
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zinc-500">
             Food orders are only available to restaurant owners and staff.
           </p>
         </main>
@@ -287,25 +287,25 @@ export default function FoodOrdersPage() {
     <>
       <Nav />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-2 text-2xl font-semibold text-neutral-900">
+        <h1 className="mb-2 text-2xl font-semibold text-white">
           Food Pre-Orders
         </h1>
-        <p className="mb-6 text-sm text-neutral-500">
+        <p className="mb-6 text-sm text-zinc-500">
           Live view of attendee food pre-orders, grouped by table, plus a
           pre-event prep summary.
         </p>
 
         {error && (
-          <Card className="mb-4 border-red-200 bg-red-50">
-            <p className="text-sm text-red-800">{error}</p>
+          <Card className="mb-4 border-brand-800 bg-brand-600/10">
+            <p className="text-sm text-brand-300">{error}</p>
           </Card>
         )}
 
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          <label className="text-sm text-neutral-600">
+          <label className="text-sm text-zinc-400">
             Event:{" "}
             <select
-              className="ml-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+              className="ml-1 rounded-none border border-zinc-700 bg-black/40 px-2 py-1.5 text-sm text-white"
               value={selectedEventId ?? ""}
               onChange={(e) => setSelectedEventId(e.target.value || null)}
             >
@@ -318,7 +318,7 @@ export default function FoodOrdersPage() {
           </label>
 
           {events !== null && events.length === 0 && (
-            <span className="text-sm text-neutral-500">
+            <span className="text-sm text-zinc-500">
               No events found for your restaurant yet.
             </span>
           )}
@@ -342,10 +342,10 @@ export default function FoodOrdersPage() {
         {view === "table" && (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <label className="text-sm text-neutral-600">
+              <label className="text-sm text-zinc-400">
                 Status:{" "}
                 <select
-                  className="ml-1 rounded-md border border-neutral-300 px-2 py-1.5 text-sm"
+                  className="ml-1 rounded-none border border-zinc-700 bg-black/40 px-2 py-1.5 text-sm text-white"
                   value={statusFilter}
                   onChange={(e) =>
                     setStatusFilter(e.target.value as FoodOrderStatus | "")
@@ -361,12 +361,12 @@ export default function FoodOrdersPage() {
               </label>
 
               {selectedOrderItemIds.size > 0 && (
-                <div className="flex items-center gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-1.5">
-                  <span className="text-sm text-neutral-600">
+                <div className="flex items-center gap-2 rounded-none border border-zinc-800 bg-zinc-900 px-3 py-1.5">
+                  <span className="text-sm text-zinc-400">
                     {selectedOrderItemIds.size} selected
                   </span>
                   <select
-                    className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                    className="rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
                     value={bulkTargetStatus}
                     onChange={(e) =>
                       setBulkTargetStatus(e.target.value as FoodOrderStatus)
@@ -384,16 +384,16 @@ export default function FoodOrdersPage() {
             </div>
 
             {foodOrders === null ? (
-              <p className="text-sm text-neutral-500">Loading…</p>
+              <p className="text-sm text-zinc-500">Loading…</p>
             ) : groupedByTable.length === 0 ? (
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-zinc-500">
                 No food pre-orders yet for this event.
               </p>
             ) : (
               <div className="flex flex-col gap-4">
                 {groupedByTable.map(([tableNumber, orders]) => (
                   <Card key={tableNumber}>
-                    <h2 className="mb-3 font-medium text-neutral-900">
+                    <h2 className="mb-3 font-medium text-white">
                       {tableNumber === GENERAL_ADMISSION_BUCKET
                         ? tableNumber
                         : `Table ${tableNumber}`}
@@ -402,7 +402,7 @@ export default function FoodOrdersPage() {
                       {orders.map((fpo) => (
                         <div
                           key={fpo.orderItemId}
-                          className="rounded-md border border-neutral-200 p-3"
+                          className="rounded-none border border-zinc-800 p-3"
                         >
                           <div className="mb-2 flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
@@ -413,7 +413,7 @@ export default function FoodOrdersPage() {
                                 )}
                                 onChange={() => toggleSelected(fpo.orderItemId)}
                               />
-                              <span className="text-sm text-neutral-600">
+                              <span className="text-sm text-zinc-400">
                                 {fpo.seatLabel
                                   ? `Seat ${fpo.seatLabel}`
                                   : "General Admission"}
@@ -423,12 +423,12 @@ export default function FoodOrdersPage() {
                               {fpo.status}
                             </Badge>
                           </div>
-                          <ul className="mb-3 flex flex-col gap-1 text-sm text-neutral-700">
+                          <ul className="mb-3 flex flex-col gap-1 text-sm text-zinc-300">
                             {fpo.items.map((item) => (
                               <li key={item.id}>
                                 {item.quantity}× {item.menuItemName}
                                 {item.notes && (
-                                  <span className="text-neutral-500">
+                                  <span className="text-zinc-500">
                                     {" "}
                                     — {item.notes}
                                   </span>
@@ -461,19 +461,19 @@ export default function FoodOrdersPage() {
 
         {view === "summary" && (
           <Card>
-            <h2 className="mb-3 font-medium text-neutral-900">
+            <h2 className="mb-3 font-medium text-white">
               Total quantity needed per menu item
             </h2>
             {summary === null ? (
-              <p className="text-sm text-neutral-500">Loading…</p>
+              <p className="text-sm text-zinc-500">Loading…</p>
             ) : summary.length === 0 ? (
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-zinc-500">
                 No food pre-orders yet for this event.
               </p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-200 text-left text-neutral-500">
+                  <tr className="border-b border-zinc-800 text-left text-zinc-500">
                     <th className="py-2">Menu item</th>
                     <th className="py-2 text-right">Total quantity</th>
                   </tr>
@@ -482,12 +482,12 @@ export default function FoodOrdersPage() {
                   {summary.map((row) => (
                     <tr
                       key={row.menuItemId}
-                      className="border-b border-neutral-100"
+                      className="border-b border-zinc-800"
                     >
-                      <td className="py-2 text-neutral-900">
+                      <td className="py-2 text-white">
                         {row.menuItemName}
                       </td>
-                      <td className="py-2 text-right font-medium text-neutral-900">
+                      <td className="py-2 text-right font-medium text-white">
                         {row.totalQuantity}
                       </td>
                     </tr>

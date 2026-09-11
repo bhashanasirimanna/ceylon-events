@@ -2,7 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, Card } from "@ceylon/design-system";
+import {
+  Badge,
+  Button,
+  Card,
+  QRScanner,
+  fireConfetti,
+  usePrefersReducedMotion,
+} from "@ceylon/design-system";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { Nav } from "@/components/Nav";
@@ -31,6 +38,8 @@ export default function CheckInPage() {
   const [successBanner, setSuccessBanner] = useState(false);
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [scanMode, setScanMode] = useState<"manual" | "camera">("manual");
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const authorized =
     !!user &&
@@ -57,16 +66,16 @@ export default function CheckInPage() {
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
-  async function handleLookup(e: React.FormEvent) {
-    e.preventDefault();
-    if (!token.trim()) return;
+  async function performLookup(rawToken: string) {
+    const trimmed = rawToken.trim();
+    if (!trimmed) return;
     setError(null);
     setSuccessBanner(false);
     setTicket(null);
     setIsLookingUp(true);
     try {
       const result = await apiFetch<TicketLookupResult>(
-        `/tickets/${encodeURIComponent(token.trim())}/lookup`,
+        `/tickets/${encodeURIComponent(trimmed)}/lookup`,
       );
       setTicket(result);
     } catch (err) {
@@ -86,6 +95,16 @@ export default function CheckInPage() {
     }
   }
 
+  async function handleLookup(e: React.FormEvent) {
+    e.preventDefault();
+    await performLookup(token);
+  }
+
+  function handleCameraScan(value: string) {
+    setToken(value);
+    performLookup(value);
+  }
+
   async function handleConfirmCheckIn() {
     if (!ticket) return;
     setError(null);
@@ -97,6 +116,7 @@ export default function CheckInPage() {
       );
       setTicket(result);
       setSuccessBanner(true);
+      fireConfetti({ reducedMotion: prefersReducedMotion });
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.statusCode === 409) {
@@ -121,7 +141,7 @@ export default function CheckInPage() {
   }
 
   if (isLoading || !user) {
-    return <main className="p-6 text-sm text-neutral-500">Loading...</main>;
+    return <main className="p-6 text-sm text-zinc-500">Loading...</main>;
   }
 
   if (!authorized) {
@@ -129,7 +149,7 @@ export default function CheckInPage() {
       <>
         <Nav />
         <main className="mx-auto max-w-md px-4 py-8">
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zinc-500">
             Check-in is only available to restaurant owners and staff.
           </p>
         </main>
@@ -141,38 +161,63 @@ export default function CheckInPage() {
     <>
       <Nav />
       <main className="mx-auto max-w-md px-4 py-8">
-        <h1 className="mb-2 text-2xl font-semibold text-neutral-900">
+        <h1 className="mb-2 text-2xl font-black uppercase tracking-tightest text-white">
           Door Check-In
         </h1>
-        <p className="mb-6 text-sm text-neutral-500">
+        <p className="mb-4 text-sm text-zinc-500">
           Scan a ticket&apos;s QR code with a USB scanner (it types into the
-          field below like a keyboard) or paste the code manually, then press
-          Enter.
+          field below like a keyboard), paste the code manually, or use your
+          device&apos;s camera.
         </p>
 
-        <form onSubmit={handleLookup} className="mb-6 flex gap-2">
-          <input
-            ref={inputRef}
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Scan or paste ticket code"
-            autoFocus
-            className="flex-1 rounded-md border border-neutral-300 px-3 py-3 text-base"
-          />
-          <Button type="submit" disabled={isLookingUp || !token.trim()}>
-            {isLookingUp ? "Looking up..." : "Look up"}
+        <div className="mb-4 flex gap-2">
+          <Button
+            variant={scanMode === "manual" ? "primary" : "secondary"}
+            onClick={() => setScanMode("manual")}
+          >
+            Manual / USB scanner
           </Button>
-        </form>
+          <Button
+            variant={scanMode === "camera" ? "primary" : "secondary"}
+            onClick={() => setScanMode("camera")}
+          >
+            Camera
+          </Button>
+        </div>
+
+        {scanMode === "camera" ? (
+          <div className="mb-6">
+            <QRScanner
+              onScan={handleCameraScan}
+              active={!ticket}
+              className="mx-auto max-w-xs"
+            />
+          </div>
+        ) : (
+          <form onSubmit={handleLookup} className="mb-6 flex gap-2">
+            <input
+              ref={inputRef}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Scan or paste ticket code"
+              autoFocus
+              className="flex-1 rounded-none border border-zinc-700 bg-black/40 px-3 py-3 text-base text-white placeholder:text-zinc-500"
+            />
+            <Button type="submit" disabled={isLookingUp || !token.trim()}>
+              {isLookingUp ? "Looking up..." : "Look up"}
+            </Button>
+          </form>
+        )}
 
         {error && (
-          <Card className="mb-4 border-red-200 bg-red-50">
-            <p className="text-sm text-red-800">{error}</p>
+          <Card className="mb-4 border-brand-800 bg-brand-600/10">
+            <p className="text-sm text-brand-300">{error}</p>
           </Card>
         )}
 
         {successBanner && (
-          <Card className="mb-4 border-green-200 bg-green-50">
-            <p className="text-sm font-medium text-green-800">
+          <Card className="mb-4 border-trust-700 bg-trust-500/10">
+            <p className="text-sm font-medium text-trust-300">
               ✓ Checked in successfully
             </p>
           </Card>
@@ -181,7 +226,7 @@ export default function CheckInPage() {
         {ticket && (
           <Card className="mb-4">
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="font-medium text-neutral-900">
+              <h2 className="font-bold text-white">
                 {ticket.eventTitle}
               </h2>
               <Badge
@@ -194,13 +239,13 @@ export default function CheckInPage() {
                   : "Issued"}
               </Badge>
             </div>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-zinc-400">
               {ticket.seatLabel
                 ? `Seat: ${ticket.seatLabel}`
                 : "General Admission"}
             </p>
             {ticket.checkedInAt && (
-              <p className="mt-1 text-xs text-neutral-500">
+              <p className="mt-1 text-xs text-zinc-500">
                 Checked in at {formatTimestamp(ticket.checkedInAt)}
               </p>
             )}

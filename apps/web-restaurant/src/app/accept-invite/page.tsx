@@ -41,7 +41,7 @@ function AcceptInviteForm() {
   if (!token) {
     return (
       <Card>
-        <p className="text-sm text-neutral-700">
+        <p className="text-sm text-zinc-300">
           This invite link is missing its token. Ask whoever invited you to
           resend it.
         </p>
@@ -52,7 +52,7 @@ function AcceptInviteForm() {
   if (activated) {
     return (
       <Card glow>
-        <p className="text-sm text-neutral-900">
+        <p className="text-sm text-white">
           Your account is activated! Log in with your new password to get
           started.
         </p>
@@ -65,14 +65,14 @@ function AcceptInviteForm() {
 
   return (
     <Card>
-      <h1 className="mb-1 bg-party-gradient bg-clip-text text-xl font-bold text-transparent">
+      <h1 className="mb-1 text-xl font-bold text-brand-600">
         Activate your account
       </h1>
-      <p className="mb-4 text-sm text-neutral-500">
+      <p className="mb-4 text-sm text-zinc-500">
         Set a password to start managing your restaurant.
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+        <label className="flex flex-col gap-1 text-sm text-zinc-300">
           Password
           <input
             type="password"
@@ -80,10 +80,10 @@ function AcceptInviteForm() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-neutral-700">
+        <label className="flex flex-col gap-1 text-sm text-zinc-300">
           Confirm password
           <input
             type="password"
@@ -91,10 +91,10 @@ function AcceptInviteForm() {
             minLength={8}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
         </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-brand-400">{error}</p>}
         <Button type="submit" variant="party" disabled={submitting}>
           {submitting ? "Activating…" : "Activate account"}
         </Button>

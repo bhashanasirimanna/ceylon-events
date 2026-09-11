@@ -15,17 +15,21 @@ export function Nav() {
   }
 
   return (
-    <nav className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-4">
+    <nav className="flex items-center justify-between border-b border-zinc-900 bg-surface-base px-6 py-4">
       <div className="flex items-center gap-6">
-        <span className="bg-party-gradient bg-clip-text text-lg font-bold text-transparent">
-          Ceylon Events — Restaurant
+        <span className="font-black uppercase tracking-tightest text-white">
+          Ceylon<span className="text-brand-500">Events</span>{" "}
+          <span className="text-zinc-600">/ Restaurant</span>
         </span>
-        <Link href="/" className="text-sm text-neutral-600 hover:text-brand-600">
+        <Link
+          href="/"
+          className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
+        >
           Home
         </Link>
         <Link
           href="/menu"
-          className="text-sm text-neutral-600 hover:text-brand-600"
+          className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
         >
           Menu
         </Link>
@@ -33,7 +37,7 @@ export function Nav() {
           user?.roles.includes("RESTAURANT_STAFF")) && (
           <Link
             href="/check-in"
-            className="text-sm text-neutral-600 hover:text-brand-600"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
           >
             Check-in
           </Link>
@@ -42,7 +46,7 @@ export function Nav() {
           user?.roles.includes("RESTAURANT_STAFF")) && (
           <Link
             href="/food-orders"
-            className="text-sm text-neutral-600 hover:text-brand-600"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
           >
             Food orders
           </Link>
@@ -51,7 +55,7 @@ export function Nav() {
           user?.roles.includes("RESTAURANT_STAFF")) && (
           <Link
             href="/offers"
-            className="text-sm text-neutral-600 hover:text-brand-600"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
           >
             Offers
           </Link>
@@ -60,7 +64,7 @@ export function Nav() {
           user?.roles.includes("RESTAURANT_STAFF")) && (
           <Link
             href="/reports"
-            className="text-sm text-neutral-600 hover:text-brand-600"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
           >
             Reports
           </Link>
@@ -68,7 +72,7 @@ export function Nav() {
         {user?.roles.includes("RESTAURANT_OWNER") && (
           <Link
             href="/staff"
-            className="text-sm text-neutral-600 hover:text-brand-600"
+            className="font-mono text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white"
           >
             Staff
           </Link>
@@ -76,7 +80,7 @@ export function Nav() {
       </div>
       <div className="flex items-center gap-3">
         {user && (
-          <span className="text-sm text-neutral-500">{user.fullName}</span>
+          <span className="text-sm text-zinc-500">{user.fullName}</span>
         )}
         <Button variant="secondary" onClick={handleLogout}>
           Logout

@@ -86,7 +86,7 @@ export default function MenuPage() {
   }, [isLoading, user, router, loadMenu]);
 
   if (isLoading || !user || !user.restaurantId) {
-    return <main className="p-6 text-sm text-neutral-500">Loading...</main>;
+    return <main className="p-6 text-sm text-zinc-500">Loading...</main>;
   }
 
   const restaurantId = user.restaurantId;
@@ -215,17 +215,17 @@ export default function MenuPage() {
     <>
       <Nav />
       <main className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold text-neutral-900">
+        <h1 className="mb-6 text-2xl font-semibold text-white">
           Menu Management
         </h1>
-        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-brand-400">{error}</p>}
 
         <div className="mb-8 flex flex-col gap-6">
           {loadingMenu && (
-            <p className="text-sm text-neutral-500">Loading menu...</p>
+            <p className="text-sm text-zinc-500">Loading menu...</p>
           )}
           {!loadingMenu && categories.length === 0 && (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-zinc-500">
               No categories yet — add your first one below.
             </p>
           )}
@@ -233,19 +233,19 @@ export default function MenuPage() {
             const form = getItemForm(category.id);
             return (
               <Card key={category.id}>
-                <h2 className="mb-3 text-lg font-medium text-neutral-900">
+                <h2 className="mb-3 text-lg font-medium text-white">
                   {category.name}
                 </h2>
                 <ul className="mb-4 flex flex-col gap-2">
                   {category.items.length === 0 && (
-                    <li className="text-sm text-neutral-400">
+                    <li className="text-sm text-zinc-600">
                       No items in this category yet.
                     </li>
                   )}
                   {category.items.map((item) => (
                     <li
                       key={item.id}
-                      className="rounded-md border border-neutral-100 px-3 py-2"
+                      className="rounded-none border border-zinc-800 px-3 py-2"
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -258,10 +258,10 @@ export default function MenuPage() {
                                 className="h-8 w-8 rounded object-cover"
                               />
                             )}
-                            <span className="font-medium text-neutral-900">
+                            <span className="font-medium text-white">
                               {item.name}
                             </span>
-                            <span className="text-sm text-neutral-500">
+                            <span className="text-sm text-zinc-500">
                               {formatPrice(item.priceMinorUnits, item.currency)}
                             </span>
                             <Badge tone={item.isAvailable ? "success" : "neutral"}>
@@ -269,7 +269,7 @@ export default function MenuPage() {
                             </Badge>
                           </div>
                           {item.description && (
-                            <p className="text-sm text-neutral-500">
+                            <p className="text-sm text-zinc-500">
                               {item.description}
                             </p>
                           )}
@@ -306,7 +306,7 @@ export default function MenuPage() {
                         </div>
                       </div>
                       {expandedPhotosItemId === item.id && (
-                        <div className="mt-3 border-t border-neutral-100 pt-3">
+                        <div className="mt-3 border-t border-zinc-800 pt-3">
                           <ImageUploader
                             category="menu-photo"
                             urls={item.photoUrls}
@@ -321,21 +321,21 @@ export default function MenuPage() {
 
                 <form
                   onSubmit={(e) => handleAddItem(category.id, e)}
-                  className="flex flex-wrap items-end gap-3 border-t border-neutral-100 pt-3"
+                  className="flex flex-wrap items-end gap-3 border-t border-zinc-800 pt-3"
                 >
                   <div className="flex flex-col">
-                    <label className="text-xs text-neutral-500">Name</label>
+                    <label className="text-xs text-zinc-500">Name</label>
                     <input
                       required
                       value={form.name}
                       onChange={(e) =>
                         updateItemForm(category.id, { name: e.target.value })
                       }
-                      className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-xs text-neutral-500">
+                    <label className="text-xs text-zinc-500">
                       Description
                     </label>
                     <input
@@ -345,11 +345,11 @@ export default function MenuPage() {
                           description: e.target.value,
                         })
                       }
-                      className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                      className="rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-xs text-neutral-500">
+                    <label className="text-xs text-zinc-500">
                       Price ({form.currency})
                     </label>
                     <input
@@ -361,18 +361,18 @@ export default function MenuPage() {
                       onChange={(e) =>
                         updateItemForm(category.id, { price: e.target.value })
                       }
-                      className="w-24 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                      className="w-24 rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-zinc-500">
                       Dietary tags
                     </span>
                     <div className="flex gap-2">
                       {DIETARY_TAGS.map((tag) => (
                         <label
                           key={tag}
-                          className="flex items-center gap-1 text-xs text-neutral-600"
+                          className="flex items-center gap-1 text-xs text-zinc-400"
                         >
                           <input
                             type="checkbox"
@@ -392,7 +392,7 @@ export default function MenuPage() {
         </div>
 
         <Card>
-          <h2 className="mb-3 text-lg font-medium text-neutral-900">
+          <h2 className="mb-3 text-lg font-medium text-white">
             + Add category
           </h2>
           <form
@@ -400,22 +400,22 @@ export default function MenuPage() {
             className="flex flex-wrap items-end gap-3"
           >
             <div className="flex flex-col">
-              <label className="text-xs text-neutral-500">Name</label>
+              <label className="text-xs text-zinc-500">Name</label>
               <input
                 required
                 value={newCategoryName}
                 onChange={(e) => setNewCategoryName(e.target.value)}
-                className="rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                className="rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
               />
             </div>
             <div className="flex flex-col">
-              <label className="text-xs text-neutral-500">Sort order</label>
+              <label className="text-xs text-zinc-500">Sort order</label>
               <input
                 type="number"
                 min="0"
                 value={newCategorySort}
                 onChange={(e) => setNewCategorySort(Number(e.target.value))}
-                className="w-20 rounded-md border border-neutral-300 px-2 py-1 text-sm"
+                className="w-20 rounded-none border border-zinc-700 bg-black/40 px-2 py-1 text-sm text-white placeholder:text-zinc-500"
               />
             </div>
             <Button type="submit" disabled={addingCategory}>

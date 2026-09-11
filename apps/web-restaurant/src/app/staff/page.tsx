@@ -28,7 +28,7 @@ export default function StaffPage() {
   }, [isLoading, user, router]);
 
   if (isLoading || !user || !user.restaurantId) {
-    return <main className="p-6 text-sm text-neutral-500">Loading...</main>;
+    return <main className="p-6 text-sm text-zinc-500">Loading...</main>;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -62,13 +62,13 @@ export default function StaffPage() {
     <>
       <Nav />
       <main className="mx-auto max-w-md px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold text-neutral-900">
+        <h1 className="mb-6 text-2xl font-semibold text-white">
           Invite Staff
         </h1>
 
         {tempPassword && (
-          <Card className="mb-4 border-green-200 bg-green-50">
-            <p className="text-sm text-green-800">
+          <Card className="mb-4 border-trust-700 bg-trust-500/10">
+            <p className="text-sm text-trust-300">
               Staff account created. Share this temporary password with them
               — it will not be shown again:
             </p>
@@ -88,18 +88,18 @@ export default function StaffPage() {
         <Card>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700">
+              <label className="mb-1 block text-sm font-medium text-zinc-300">
                 Full name
               </label>
               <input
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700">
+              <label className="mb-1 block text-sm font-medium text-zinc-300">
                 Email
               </label>
               <input
@@ -107,10 +107,10 @@ export default function StaffPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+                className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
               />
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-brand-400">{error}</p>}
             <Button type="submit" disabled={submitting}>
               {submitting ? "Inviting..." : "Invite staff member"}
             </Button>
