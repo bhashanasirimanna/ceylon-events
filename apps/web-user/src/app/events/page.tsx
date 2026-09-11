@@ -45,14 +45,14 @@ export default function EventsPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-neutral-900">Events</h1>
+      <h1 className="text-2xl font-semibold text-white">Events</h1>
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-4 text-sm text-brand-400">{error}</p>}
 
       {events === null ? (
-        <p className="mt-4 text-sm text-neutral-500">Loading…</p>
+        <p className="mt-4 text-sm text-zinc-500">Loading…</p>
       ) : events.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">
+        <p className="mt-4 text-sm text-zinc-500">
           No events are open for booking yet.
         </p>
       ) : (
@@ -60,14 +60,14 @@ export default function EventsPage() {
           {events.map((event) => (
             <Link key={event.id} href={`/events/${event.id}`}>
               <Card className="h-full transition-shadow hover:shadow-md">
-                <h2 className="font-medium text-neutral-900">
+                <h2 className="font-medium text-white">
                   {event.title}
                 </h2>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-sm text-zinc-500">
                   {formatDateTime(event.startsAt)}
                 </p>
                 {restaurants[event.restaurantId] && (
-                  <p className="mt-1 text-sm text-neutral-500">
+                  <p className="mt-1 text-sm text-zinc-500">
                     {restaurants[event.restaurantId].name}
                   </p>
                 )}

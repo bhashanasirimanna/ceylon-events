@@ -71,14 +71,14 @@ export default function MyOrdersPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-neutral-900">My orders</h1>
+      <h1 className="text-2xl font-semibold text-white">My orders</h1>
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-4 text-sm text-brand-400">{error}</p>}
 
       {orders === null ? (
-        <p className="mt-4 text-sm text-neutral-500">Loading…</p>
+        <p className="mt-4 text-sm text-zinc-500">Loading…</p>
       ) : orders.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">
+        <p className="mt-4 text-sm text-zinc-500">
           You haven&apos;t placed any orders yet.
         </p>
       ) : (
@@ -87,10 +87,10 @@ export default function MyOrdersPage() {
             <Link key={order.id} href={`/orders/${order.id}`}>
               <Card className="flex items-center justify-between transition-shadow hover:shadow-md">
                 <div>
-                  <p className="font-medium text-neutral-900">
+                  <p className="font-medium text-white">
                     {events[order.eventId]?.title ?? order.eventId}
                   </p>
-                  <p className="text-sm text-neutral-500">
+                  <p className="text-sm text-zinc-500">
                     {formatDate(order.createdAt)} ·{" "}
                     {formatMoney(order.totalMinorUnits, order.currency)}
                   </p>

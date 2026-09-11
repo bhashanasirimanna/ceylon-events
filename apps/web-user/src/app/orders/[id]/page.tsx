@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   OrderStatus,
@@ -10,7 +10,14 @@ import {
   RatingSubjectType,
   TicketStatus,
 } from "@ceylon/shared-types";
-import { Badge, Button, Card } from "@ceylon/design-system";
+import {
+  Badge,
+  Button,
+  Card,
+  QRCodeDisplay,
+  fireConfetti,
+  usePrefersReducedMotion,
+} from "@ceylon/design-system";
 import type { OfferSnapshot } from "@ceylon/shared-types";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-context";
@@ -88,6 +95,8 @@ export default function OrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancelling, setIsCancelling] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const hasCelebratedRef = useRef(false);
 
   const paymentReturnFlag = searchParams.get("payment");
 
@@ -160,6 +169,20 @@ export default function OrderDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, authLoading, user]);
 
+  // Real reward moment: only the redirect-back-from-payment landing on an
+  // already-CONFIRMED order, and only once per visit — never on every
+  // subsequent view of an old order.
+  useEffect(() => {
+    if (
+      order?.status === OrderStatus.CONFIRMED &&
+      paymentReturnFlag === "return" &&
+      !hasCelebratedRef.current
+    ) {
+      hasCelebratedRef.current = true;
+      fireConfetti({ reducedMotion: prefersReducedMotion });
+    }
+  }, [order?.status, paymentReturnFlag, prefersReducedMotion]);
+
   async function handleCancel() {
     if (!order) return;
     setIsCancelling(true);
@@ -175,12 +198,12 @@ export default function OrderDetailPage() {
   }
 
   if (isLoading || authLoading) {
-    return <main className="mx-auto max-w-2xl px-4 py-8">Loading…</main>;
+    return <main className="mx-auto max-w-2xl px-4 py-8 text-zinc-500">Loading…</main>;
   }
 
   if (error && !order) {
     return (
-      <main className="mx-auto max-w-2xl px-4 py-8 text-red-600">{error}</main>
+      <main className="mx-auto max-w-2xl px-4 py-8 text-brand-400">{error}</main>
     );
   }
 
@@ -194,20 +217,20 @@ export default function OrderDetailPage() {
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
       {paymentReturnFlag === "return" && (
-        <div className="mb-4 rounded-lg border border-brand-300 bg-brand-50 p-4 text-sm text-brand-700">
+        <div className="mb-4 border border-brand-800 bg-brand-600/10 p-4 text-sm text-brand-300">
           Redirected back from PayHere — this page reflects the order&apos;s
           real status once PayHere confirms the payment on our server, not
           just from this redirect.
         </div>
       )}
       {paymentReturnFlag === "cancelled" && (
-        <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-700">
+        <div className="mb-4 border border-perk-700 bg-perk-500/10 p-4 text-sm text-perk-300">
           Checkout was cancelled at PayHere. You can try again below.
         </div>
       )}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900">
+        <h1 className="text-xl font-black uppercase tracking-tightest text-white">
           {event ? event.title : "Order"}
         </h1>
         <Badge tone={STATUS_TONE[order.status]}>{order.status}</Badge>
@@ -216,13 +239,13 @@ export default function OrderDetailPage() {
       {event && (
         <Link
           href={`/events/${event.id}`}
-          className="mt-1 inline-block text-sm text-brand-600 hover:underline"
+          className="mt-1 inline-block text-sm text-brand-500 hover:underline"
         >
           View event
         </Link>
       )}
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-brand-400">{error}</p>}
 
       <Card className="mt-4">
         <div className="space-y-3">
@@ -232,14 +255,14 @@ export default function OrderDetailPage() {
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between border-b border-neutral-100 pb-3 last:border-none last:pb-0"
+                className="flex items-center justify-between border-b border-zinc-800 pb-3 last:border-none last:pb-0"
               >
                 <div>
-                  <p className="font-medium text-neutral-900">
+                  <p className="font-medium text-white">
                     {tiers[item.ticketTierId]?.name ?? item.ticketTierId}
                   </p>
                   {item.seatLabel && (
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm text-zinc-500">
                       Seat {item.seatLabel}
                     </p>
                   )}
@@ -248,7 +271,7 @@ export default function OrderDetailPage() {
                       {offers.map((offer) => (
                         <li
                           key={offer.id}
-                          className="text-xs text-green-700"
+                          className="font-mono text-xs font-bold uppercase tracking-widest text-perk-500"
                         >
                           Includes: {offer.name}
                         </li>
@@ -259,16 +282,16 @@ export default function OrderDetailPage() {
                     order.status !== OrderStatus.REFUNDED && (
                       <Link
                         href={`/orders/${order.id}/items/${item.id}/food`}
-                        className="mt-1 inline-block text-sm text-brand-600 hover:underline"
+                        className="mt-1 inline-block text-sm text-brand-500 hover:underline"
                       >
                         Pre-order food for this ticket →
                       </Link>
                     )}
                   {foodPreOrder && foodPreOrder.items.length > 0 && (
-                    <div className="mt-2 space-y-2 border-t border-neutral-100 pt-2">
+                    <div className="mt-2 space-y-2 border-t border-zinc-800 pt-2">
                       {foodPreOrder.items.map((line) => (
                         <div key={line.id}>
-                          <p className="text-xs text-neutral-500">
+                          <p className="text-xs text-zinc-500">
                             {line.quantity}× {line.menuItemName}
                           </p>
                           {canRate && (
@@ -287,20 +310,20 @@ export default function OrderDetailPage() {
                     </div>
                   )}
                 </div>
-                <span className="text-sm text-neutral-700">
+                <span className="font-mono text-sm text-zinc-300">
                   {formatMoney(item.priceMinorUnits, order.currency)}
                 </span>
               </div>
             );
           })}
         </div>
-        <div className="mt-4 space-y-1 border-t border-neutral-200 pt-3">
-          <div className="flex items-center justify-between text-sm text-neutral-600">
+        <div className="mt-4 space-y-1 border-t border-zinc-800 pt-3">
+          <div className="flex items-center justify-between font-mono text-sm text-zinc-400">
             <span>Subtotal</span>
             <span>{formatMoney(order.subtotalMinorUnits, order.currency)}</span>
           </div>
           {order.discountMinorUnits > 0 && (
-            <div className="flex items-center justify-between text-sm text-green-700">
+            <div className="flex items-center justify-between font-mono text-sm text-perk-500">
               <span>Promo code discount</span>
               <span>
                 -{formatMoney(order.discountMinorUnits, order.currency)}
@@ -308,13 +331,13 @@ export default function OrderDetailPage() {
             </div>
           )}
           <div className="flex items-center justify-between">
-            <span className="font-medium text-neutral-900">Total</span>
-            <span className="font-semibold text-brand-600">
+            <span className="font-bold text-white">Total</span>
+            <span className="font-mono text-lg font-bold text-brand-500">
               {formatMoney(order.totalMinorUnits, order.currency)}
             </span>
           </div>
         </div>
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="mt-2 text-sm text-zinc-500">
           Payment method: {order.paymentMethod}
         </p>
       </Card>
@@ -330,7 +353,11 @@ export default function OrderDetailPage() {
       )}
 
       {order.status === OrderStatus.CONFIRMED && (
-        <TicketsSection tickets={tickets} />
+        <TicketsSection
+          tickets={tickets}
+          holderName={user?.fullName}
+          bookingRef={order.id}
+        />
       )}
 
       {canRate && event && (
@@ -360,44 +387,65 @@ export default function OrderDetailPage() {
   );
 }
 
-function TicketsSection({ tickets }: { tickets: Ticket[] }) {
+function TicketsSection({
+  tickets,
+  holderName,
+  bookingRef,
+}: {
+  tickets: Ticket[];
+  holderName: string | undefined;
+  bookingRef: string;
+}) {
   return (
     <div className="mt-6">
-      <h2 className="text-lg font-semibold text-neutral-900">Your tickets</h2>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h2 className="text-lg font-black uppercase tracking-tightest text-white">
+        Your tickets
+      </h2>
+      <p className="mt-1 text-sm text-zinc-500">
         Show these QR codes at the door — they&apos;re your proof of
         purchase.
       </p>
       {tickets.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">
+        <p className="mt-3 text-sm text-zinc-500">
           Tickets are being generated — refresh in a moment.
         </p>
       ) : (
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          {tickets.map((ticket) => (
-            <Card key={ticket.id} className="flex flex-col items-center gap-2 text-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={ticket.qrCodeDataUrl}
-                alt="Ticket QR code"
-                className="h-48 w-48"
-              />
-              <p className="font-medium text-neutral-900">
-                {ticket.seatLabel ? `Seat ${ticket.seatLabel}` : "General Admission"}
-              </p>
-              <Badge
-                tone={
-                  ticket.status === TicketStatus.CHECKED_IN
-                    ? "success"
-                    : "neutral"
-                }
+          {tickets.map((ticket) => {
+            const checkedIn = ticket.status === TicketStatus.CHECKED_IN;
+            return (
+              <Card
+                key={ticket.id}
+                className="flex flex-col items-center gap-3 text-center"
               >
-                {ticket.status === TicketStatus.CHECKED_IN
-                  ? `Checked in ${ticket.checkedInAt ? new Date(ticket.checkedInAt).toLocaleString() : ""}`
-                  : "Not checked in yet"}
-              </Badge>
-            </Card>
-          ))}
+                <QRCodeDisplay
+                  dataUrl={ticket.qrCodeDataUrl}
+                  size={176}
+                  status={checkedIn ? "checked-in" : "valid"}
+                />
+                <div>
+                  {holderName && (
+                    <p className="text-sm font-medium text-white">
+                      {holderName}
+                    </p>
+                  )}
+                  <p className="text-sm text-zinc-400">
+                    {ticket.seatLabel
+                      ? `Seat ${ticket.seatLabel}`
+                      : "General Admission"}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-zinc-600">
+                    REF {bookingRef.slice(0, 8).toUpperCase()}
+                  </p>
+                </div>
+                {checkedIn && ticket.checkedInAt && (
+                  <p className="font-mono text-xs text-zinc-500">
+                    Checked in {new Date(ticket.checkedInAt).toLocaleString()}
+                  </p>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
@@ -420,7 +468,7 @@ function PaymentSection({
   if (order.paymentMethod === PaymentMethod.PAYHERE) {
     if (paymentInfo?.payment?.status === PaymentStatus.APPROVED) {
       return (
-        <div className="mt-6 rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-green-700">
+        <div className="mt-6 border border-trust-700 bg-trust-500/10 p-4 text-sm text-trust-300">
           Payment approved — your order will confirm shortly.
         </div>
       );
@@ -498,25 +546,25 @@ function PayHereForm({
 
   return (
     <Card className="mt-6">
-      <h2 className="text-lg font-semibold text-neutral-900">
+      <h2 className="text-lg font-black uppercase tracking-tightest text-white">
         Pay with PayHere
       </h2>
       <form onSubmit={handlePay} className="mt-3 space-y-3">
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-brand-400">{error}</p>}
         <div className="grid grid-cols-2 gap-3">
           <input
             required
             placeholder="First name"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
           <input
             required
             placeholder="Last name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
         </div>
         <input
@@ -525,21 +573,21 @@ function PayHereForm({
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
         />
         <input
           required
           placeholder="Phone"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
         />
         <input
           required
           placeholder="Address"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
         />
         <div className="grid grid-cols-2 gap-3">
           <input
@@ -547,14 +595,14 @@ function PayHereForm({
             placeholder="City"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
           <input
             required
             placeholder="Country"
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
         </div>
         <Button type="submit" disabled={isSubmitting}>
@@ -639,7 +687,7 @@ function PaymentProofSection({
 
   return (
     <div className="mt-6">
-      <h2 className="text-lg font-semibold text-neutral-900">
+      <h2 className="text-lg font-black uppercase tracking-tightest text-white">
         Payment proof
       </h2>
 
@@ -648,18 +696,18 @@ function PaymentProofSection({
           {proofs.map((proof) => (
             <Card key={proof.id} className="text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-neutral-700">{proof.referenceNote}</span>
+                <span className="text-zinc-300">{proof.referenceNote}</span>
                 <Badge tone={PAYMENT_PROOF_TONE[proof.status]}>
                   {proof.status}
                 </Badge>
               </div>
               {proof.status === PaymentStatus.REJECTED && proof.reviewNotes && (
-                <p className="mt-1 text-red-600">
+                <p className="mt-1 text-brand-400">
                   Rejected: {proof.reviewNotes}
                 </p>
               )}
               {proof.status === PaymentStatus.PENDING && (
-                <p className="mt-1 text-neutral-500">Pending admin review</p>
+                <p className="mt-1 text-zinc-500">Pending admin review</p>
               )}
             </Card>
           ))}
@@ -669,8 +717,8 @@ function PaymentProofSection({
       {canSubmit && (
         <Card className="mt-3">
           <form onSubmit={handleSubmit} className="space-y-3">
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <p className="text-sm text-neutral-600">
+            {error && <p className="text-sm text-brand-400">{error}</p>}
+            <p className="text-sm text-zinc-400">
               Upload a screenshot or photo of your bank transfer / deposit
               receipt for{" "}
               {formatMoney(order.totalMinorUnits, order.currency)}.
@@ -687,7 +735,7 @@ function PaymentProofSection({
               placeholder="Reference note (e.g. bank transfer reference)"
               value={referenceNote}
               onChange={(e) => setReferenceNote(e.target.value)}
-              className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
             />
             <Button type="submit" disabled={isSubmitting || !file}>
               {isSubmitting ? "Submitting…" : "Submit proof"}

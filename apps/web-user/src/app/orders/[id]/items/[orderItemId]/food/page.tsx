@@ -177,7 +177,7 @@ export default function FoodPreOrderPage() {
 
   if (loadError || !order || !event || !restaurant) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-8 text-red-600">
+      <main className="mx-auto max-w-3xl px-4 py-8 text-brand-400">
         {loadError ?? "Unable to load this ticket"}
       </main>
     );
@@ -192,22 +192,22 @@ export default function FoodPreOrderPage() {
         ← Back to order
       </Link>
 
-      <h1 className="mt-2 text-xl font-semibold text-neutral-900">
+      <h1 className="mt-2 text-xl font-semibold text-white">
         Pre-order food — {event.title}
       </h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-zinc-500">
         {restaurant.name}. This is settled and paid for at the venue — no
         payment is collected here.
       </p>
 
       {cutoffClosed && (
-        <div className="mt-4 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+        <div className="mt-4 rounded-lg border border-brand-800 bg-brand-600/10 p-4 text-sm text-brand-400">
           {submitError}
         </div>
       )}
 
       {submitted && (
-        <div className="mt-4 rounded-lg border border-green-300 bg-green-50 p-4 text-sm text-green-700">
+        <div className="mt-4 rounded-lg border border-trust-700 bg-trust-500/10 p-4 text-sm text-trust-300">
           Your food pre-order has been saved.{" "}
           <Link href={`/orders/${order.id}`} className="underline">
             Back to order
@@ -216,18 +216,18 @@ export default function FoodPreOrderPage() {
       )}
 
       {submitError && !cutoffClosed && (
-        <p className="mt-4 text-sm text-red-600">{submitError}</p>
+        <p className="mt-4 text-sm text-brand-400">{submitError}</p>
       )}
 
       <div className="mt-6 space-y-8">
         {menu.length === 0 && (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zinc-500">
             This restaurant hasn&apos;t published a menu yet.
           </p>
         )}
         {menu.map((category) => (
           <section key={category.id}>
-            <h2 className="text-lg font-medium text-neutral-900">
+            <h2 className="text-lg font-medium text-white">
               {category.name}
             </h2>
             <div className="mt-3 space-y-3">
@@ -238,7 +238,7 @@ export default function FoodPreOrderPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-neutral-900">
+                          <h3 className="font-medium text-white">
                             {item.name}
                           </h3>
                           {!item.isAvailable && (
@@ -246,7 +246,7 @@ export default function FoodPreOrderPage() {
                           )}
                         </div>
                         {item.description && (
-                          <p className="mt-1 text-sm text-neutral-500">
+                          <p className="mt-1 text-sm text-zinc-500">
                             {item.description}
                           </p>
                         )}
@@ -269,7 +269,7 @@ export default function FoodPreOrderPage() {
                             type="button"
                             disabled={cutoffClosed || !item.isAvailable}
                             onClick={() => setQuantity(item.id, line.quantity - 1)}
-                            className="h-8 w-8 rounded-md border border-neutral-300 text-neutral-700 disabled:opacity-50"
+                            className="h-8 w-8 rounded-md border border-zinc-700 text-zinc-300 disabled:opacity-50"
                           >
                             −
                           </button>
@@ -278,7 +278,7 @@ export default function FoodPreOrderPage() {
                             type="button"
                             disabled={cutoffClosed || !item.isAvailable}
                             onClick={() => setQuantity(item.id, line.quantity + 1)}
-                            className="h-8 w-8 rounded-md border border-neutral-300 text-neutral-700 disabled:opacity-50"
+                            className="h-8 w-8 rounded-md border border-zinc-700 text-zinc-300 disabled:opacity-50"
                           >
                             +
                           </button>
@@ -291,7 +291,7 @@ export default function FoodPreOrderPage() {
                         placeholder="Notes (e.g. no onions)"
                         value={line.notes}
                         onChange={(e) => setNotes(item.id, e.target.value)}
-                        className="mt-3 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:opacity-50"
+                        className="mt-3 w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500 disabled:opacity-50"
                       />
                     )}
                   </Card>
@@ -304,11 +304,11 @@ export default function FoodPreOrderPage() {
 
       {menu.length > 0 && (
         <Card className="mt-8">
-          <h2 className="text-lg font-semibold text-neutral-900">
+          <h2 className="text-lg font-semibold text-white">
             Your food pre-order
           </h2>
           {cartEntries.length === 0 ? (
-            <p className="mt-2 text-sm text-neutral-500">
+            <p className="mt-2 text-sm text-zinc-500">
               Add items above to build your pre-order.
             </p>
           ) : (
@@ -321,17 +321,17 @@ export default function FoodPreOrderPage() {
                     key={menuItemId}
                     className="flex items-center justify-between text-sm"
                   >
-                    <span className="text-neutral-700">
+                    <span className="text-zinc-300">
                       {info.name} × {line.quantity}
                     </span>
-                    <span className="text-neutral-900">
+                    <span className="text-white">
                       {info.currency}{" "}
                       {((info.priceMinorUnits * line.quantity) / 100).toFixed(2)}
                     </span>
                   </div>
                 );
               })}
-              <div className="flex items-center justify-between border-t border-neutral-200 pt-3 font-medium">
+              <div className="flex items-center justify-between border-t border-zinc-800 pt-3 font-medium">
                 <span>Total (pay at the venue)</span>
                 <span>
                   {currency} {(grandTotalMinorUnits / 100).toFixed(2)}

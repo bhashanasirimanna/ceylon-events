@@ -110,7 +110,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative rounded-full p-2 text-neutral-600 hover:bg-neutral-100 hover:text-brand-600"
+        className="relative rounded-full p-2 text-zinc-400 hover:bg-zinc-900 hover:text-brand-500"
         aria-label="Notifications"
       >
         <svg
@@ -122,36 +122,36 @@ export function NotificationBell() {
           <path d="M12 2a6 6 0 00-6 6v3.086l-1.707 1.707A1 1 0 005 14.5h14a1 1 0 00.707-1.707L18 10.086V8a6 6 0 00-6-6zM9.5 17a2.5 2.5 0 005 0h-5z" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand-600 px-1 font-mono text-[10px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-20 mt-2 w-80 rounded-lg border border-neutral-200 bg-white shadow-lg">
-          <div className="flex items-center justify-between border-b border-neutral-100 px-3 py-2">
-            <span className="text-sm font-medium text-neutral-900">
+        <div className="absolute right-0 z-20 mt-2 w-80 rounded-none border border-zinc-800 bg-surface-raised shadow-xl">
+          <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
+            <span className="font-mono text-xs font-bold uppercase tracking-widest text-white">
               Notifications
             </span>
             {unreadCount > 0 && (
               <button
                 type="button"
                 onClick={markAllRead}
-                className="text-xs text-brand-600 hover:underline"
+                className="text-xs font-medium text-brand-500 hover:underline"
               >
                 Mark all read
               </button>
             )}
           </div>
 
-          {error && <p className="px-3 py-2 text-xs text-red-600">{error}</p>}
+          {error && <p className="px-3 py-2 text-xs text-brand-400">{error}</p>}
 
           <div className="max-h-96 overflow-y-auto">
             {notifications === null ? (
-              <p className="px-3 py-4 text-sm text-neutral-500">Loading…</p>
+              <p className="px-3 py-4 text-sm text-zinc-500">Loading…</p>
             ) : notifications.length === 0 ? (
-              <p className="px-3 py-4 text-sm text-neutral-500">
+              <p className="px-3 py-4 text-sm text-zinc-500">
                 No notifications yet.
               </p>
             ) : (
@@ -160,20 +160,20 @@ export function NotificationBell() {
                   key={n.id}
                   type="button"
                   onClick={() => !n.readAt && markRead(n.id)}
-                  className={`block w-full border-b border-neutral-50 px-3 py-2 text-left last:border-none hover:bg-neutral-50 ${
-                    n.readAt ? "bg-white" : "bg-brand-50"
+                  className={`block w-full border-b border-zinc-900 px-3 py-2 text-left last:border-none hover:bg-zinc-900 ${
+                    n.readAt ? "" : "bg-brand-600/10"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-medium text-neutral-900">
+                    <span className="text-sm font-medium text-white">
                       {n.title}
                     </span>
                     {!n.readAt && (
-                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand-500" />
                     )}
                   </div>
-                  <p className="mt-0.5 text-xs text-neutral-600">{n.body}</p>
-                  <p className="mt-1 text-xs text-neutral-400">
+                  <p className="mt-0.5 text-xs text-zinc-400">{n.body}</p>
+                  <p className="mt-1 font-mono text-xs text-zinc-500">
                     {formatRelativeTime(n.createdAt)}
                   </p>
                 </button>

@@ -353,17 +353,17 @@ export default function CheckoutPage() {
   if (!reviewing) {
     return (
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="text-xl font-semibold text-neutral-900">
+        <h1 className="text-xl font-black uppercase tracking-tightest text-white">
           {event.title} — pick a seat
         </h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-zinc-400">
           {tier.name} · {formatPrice(tier)}
         </p>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-brand-400">{error}</p>}
 
         {snapshot && (
-          <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-white p-2">
+          <div className="mt-4 overflow-x-auto border border-zinc-800 bg-surface-raised p-2">
             <SeatMapCanvas
               data={snapshot}
               seatStatuses={seatStatuses}
@@ -373,21 +373,21 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-neutral-600">
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#e2e8f0]" />
+            <span className="inline-block h-3 w-3 rounded-full bg-zinc-800" />
             Available
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#fde68a]" />
+            <span className="inline-block h-3 w-3 rounded-full bg-perk-500" />
             Held by someone else
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#93c5fd]" />
+            <span className="inline-block h-3 w-3 rounded-full bg-brand-500" />
             Held by you
           </span>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded-full bg-[#fca5a5]" />
+            <span className="inline-block h-3 w-3 rounded-full bg-zinc-600" />
             Sold
           </span>
         </div>
@@ -395,10 +395,10 @@ export default function CheckoutPage() {
         {hold && (
           <Card className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-neutral-900">
+              <p className="font-medium text-white">
                 Holding seat {heldSeatLabel ?? hold.seatId}
               </p>
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-zinc-400">
                 Hold expires in {formatCountdown(hold.expiresAt)}
               </p>
             </div>
@@ -421,19 +421,19 @@ export default function CheckoutPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-xl font-semibold text-neutral-900">
+      <h1 className="text-xl font-black uppercase tracking-tightest text-white">
         Review your order
       </h1>
 
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-brand-400">{error}</p>}
 
       <Card className="mt-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-medium text-neutral-900">{event.title}</h2>
-            <p className="text-sm text-neutral-500">{tier.name}</p>
+            <h2 className="font-medium text-white">{event.title}</h2>
+            <p className="text-sm text-zinc-400">{tier.name}</p>
             {heldSeatLabel && (
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-zinc-400">
                 Seat {heldSeatLabel}
               </p>
             )}
@@ -443,9 +443,9 @@ export default function CheckoutPage() {
           </span>
         </div>
         {promoResult?.valid && estimatedDiscount() > 0 && (
-          <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-3 text-sm">
-            <span className="text-neutral-500">After promo code (estimated)</span>
-            <span className="font-medium text-neutral-900">
+          <div className="mt-3 flex items-center justify-between border-t border-zinc-800 pt-3 text-sm">
+            <span className="text-zinc-400">After promo code (estimated)</span>
+            <span className="font-medium text-white">
               {formatPrice({
                 ...tier,
                 priceMinorUnits: tier.priceMinorUnits - estimatedDiscount(),
@@ -456,7 +456,7 @@ export default function CheckoutPage() {
       </Card>
 
       {versionId && hold && (
-        <p className="mt-3 text-sm text-neutral-500">
+        <p className="mt-3 text-sm text-zinc-400">
           Seat hold expires in {formatCountdown(hold.expiresAt)}.{" "}
           <button
             type="button"
@@ -468,7 +468,7 @@ export default function CheckoutPage() {
         </p>
       )}
 
-      <h3 className="mt-6 font-medium text-neutral-900">Promo code</h3>
+      <h3 className="mt-6 font-medium text-white">Promo code</h3>
       <div className="mt-2 flex gap-2">
         <input
           value={promoCodeInput}
@@ -478,7 +478,7 @@ export default function CheckoutPage() {
             setPromoError(null);
           }}
           placeholder="Enter promo code"
-          className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
         />
         <Button
           variant="secondary"
@@ -488,9 +488,9 @@ export default function CheckoutPage() {
           {isValidatingPromo ? "Checking…" : "Apply"}
         </Button>
       </div>
-      {promoError && <p className="mt-2 text-sm text-red-600">{promoError}</p>}
+      {promoError && <p className="mt-2 text-sm text-brand-400">{promoError}</p>}
       {promoResult?.valid && (
-        <div className="mt-2 flex items-center justify-between rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+        <div className="mt-2 flex items-center justify-between border border-trust-700 bg-trust-500/10 px-3 py-2 text-sm text-trust-300">
           <span>Promo code applied</span>
           <span className="font-medium">
             -{formatPrice({ ...tier, priceMinorUnits: estimatedDiscount() })}
@@ -498,9 +498,9 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      <h3 className="mt-6 font-medium text-neutral-900">Payment method</h3>
+      <h3 className="mt-6 font-medium text-white">Payment method</h3>
       <div className="mt-2 space-y-2">
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <label className="flex items-center gap-2 text-sm text-zinc-300">
           <input
             type="radio"
             name="paymentMethod"
@@ -509,7 +509,7 @@ export default function CheckoutPage() {
           />
           Pay Online (PayHere)
         </label>
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <label className="flex items-center gap-2 text-sm text-zinc-300">
           <input
             type="radio"
             name="paymentMethod"
@@ -519,18 +519,23 @@ export default function CheckoutPage() {
           Upload Payment Proof
         </label>
       </div>
-      <p className="mt-2 text-xs text-neutral-500">
+      <p className="mt-2 text-xs text-zinc-500">
         Payment collection isn&apos;t live yet — either option currently just
         reserves your order as Pending.
       </p>
 
       <Button
-        className="mt-6"
+        className="mt-6 w-full"
         variant="party"
         disabled={isPlacing}
         onClick={handlePlaceOrder}
       >
-        {isPlacing ? "Placing order…" : "Place order"}
+        {isPlacing
+          ? "Placing order…"
+          : `Place order — ${formatPrice({
+              ...tier,
+              priceMinorUnits: tier.priceMinorUnits - estimatedDiscount(),
+            })}`}
       </Button>
     </main>
   );

@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import type { PaginatedResult, Restaurant } from "@/lib/types";
-import { Card } from "@ceylon/design-system";
+import { MediaCard, Section, SectionHeader } from "@ceylon/design-system";
 
 export default function HomePage() {
+  const router = useRouter();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,51 +29,60 @@ export default function HomePage() {
   }, [restaurants, search]);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
-      <div className="rounded-lg bg-night-gradient px-6 py-10 sm:px-10 sm:py-14">
-        <h1 className="bg-party-gradient bg-clip-text text-3xl font-bold text-transparent sm:text-4xl">
-          Discover events at partner restaurants
-        </h1>
-        <p className="mt-2 max-w-xl text-neutral-300">
-          Browse restaurant venues, preview their menus, and pre-order your
-          food before you even get there.
-        </p>
+    <main>
+      <section className="border-b border-zinc-900 bg-surface-alt px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <p className="mb-4 font-mono text-xs font-bold uppercase tracking-widest text-brand-500">
+            Ceylon Events
+          </p>
+          <h1 className="max-w-3xl text-4xl font-black uppercase leading-[0.95] tracking-tightest text-white sm:text-6xl">
+            Dinner, drinks, and a{" "}
+            <span className="text-brand-500">show</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-base font-medium leading-relaxed text-zinc-400">
+            Browse restaurant venues, preview their menus, and pre-order your
+            food before you even get there.
+          </p>
 
-        <input
-          type="text"
-          placeholder="Search restaurants by name"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="mt-6 w-full max-w-sm rounded-pill border border-white/20 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-neutral-400 focus:border-accent-400 focus:outline-none"
-        />
-      </div>
+          <input
+            type="text"
+            placeholder="Search restaurants by name"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mt-8 w-full max-w-sm rounded-none border border-zinc-700 bg-black/40 px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:border-brand-500 focus:outline-none"
+          />
+        </div>
+      </section>
 
-      {isLoading && <p className="mt-8 text-neutral-500">Loading restaurants…</p>}
-      {error && <p className="mt-8 text-red-600">{error}</p>}
+      <Section tone="base">
+        <SectionHeader eyebrow="Where to go" title="PARTNER" accent="RESTAURANTS" />
 
-      {!isLoading && !error && filtered.length === 0 && (
-        <p className="mt-8 text-neutral-500">No restaurants found.</p>
-      )}
+        {isLoading && <p className="text-sm text-zinc-500">Loading restaurants…</p>}
+        {error && <p className="text-sm text-brand-400">{error}</p>}
+        {!isLoading && !error && filtered.length === 0 && (
+          <p className="text-sm text-zinc-500">No restaurants found.</p>
+        )}
 
-      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((restaurant) => (
-          <Link key={restaurant.id} href={`/restaurants/${restaurant.id}`}>
-            <Card className="h-full transition-shadow hover:shadow-md">
-              <h2 className="font-semibold text-neutral-900">
-                {restaurant.name}
-              </h2>
-              <p className="mt-1 text-sm text-neutral-500">
-                {restaurant.address}
-              </p>
-              {restaurant.description && (
-                <p className="mt-2 line-clamp-2 text-sm text-neutral-700">
-                  {restaurant.description}
-                </p>
-              )}
-            </Card>
-          </Link>
-        ))}
-      </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((restaurant) => (
+            <MediaCard
+              key={restaurant.id}
+              imageUrl={restaurant.coverPhotoUrl}
+              imageAlt={restaurant.name}
+              title={restaurant.name}
+              subtitle={restaurant.address}
+              footer={
+                restaurant.description ? (
+                  <p className="line-clamp-2 text-sm text-zinc-400">
+                    {restaurant.description}
+                  </p>
+                ) : undefined
+              }
+              onClick={() => router.push(`/restaurants/${restaurant.id}`)}
+            />
+          ))}
+        </div>
+      </Section>
     </main>
   );
 }

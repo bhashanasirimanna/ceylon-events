@@ -56,6 +56,33 @@ function saleWindowNote(tier: TicketTier): string | null {
   return null;
 }
 
+/** Real countdown to a real timestamp — never a hardcoded/simulated one. */
+function useCountdown(targetIso: string): string | null {
+  const [label, setLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const target = new Date(targetIso).getTime();
+    function tick() {
+      const diffMs = target - Date.now();
+      if (diffMs <= 0) {
+        setLabel(null);
+        return;
+      }
+      const days = Math.floor(diffMs / 86_400_000);
+      const hours = Math.floor((diffMs % 86_400_000) / 3_600_000);
+      const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
+      if (days > 0) setLabel(`${days}d ${hours}h`);
+      else if (hours > 0) setLabel(`${hours}h ${minutes}m`);
+      else setLabel(`${minutes}m`);
+    }
+    tick();
+    const interval = setInterval(tick, 60_000);
+    return () => clearInterval(interval);
+  }, [targetIso]);
+
+  return label;
+}
+
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
   const [event, setEvent] = useState<EventListing | null>(null);
@@ -107,13 +134,17 @@ export default function EventDetailPage() {
       .finally(() => setIsLoading(false));
   }, [params.id]);
 
+  const countdown = useCountdown(event?.startsAt ?? new Date().toISOString());
+
   if (isLoading) {
-    return <main className="mx-auto max-w-5xl px-4 py-8">Loading…</main>;
+    return (
+      <main className="mx-auto max-w-5xl px-4 py-8 text-zinc-500">Loading…</main>
+    );
   }
 
   if (error || !event) {
     return (
-      <main className="mx-auto max-w-5xl px-4 py-8 text-red-600">
+      <main className="mx-auto max-w-5xl px-4 py-8 text-brand-400">
         {error ?? "Event not found"}
       </main>
     );
@@ -121,39 +152,46 @@ export default function EventDetailPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      {event.bannerImageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={event.bannerImageUrl}
-          alt=""
-          className="mb-6 h-64 w-full rounded-lg object-cover"
-        />
-      ) : (
-        <div className="mb-6 flex h-64 w-full items-end rounded-lg bg-night-gradient p-6">
-          <span className="bg-party-gradient bg-clip-text text-xl font-bold text-transparent">
+      <div className="relative mb-6 h-64 w-full overflow-hidden bg-surface-raised sm:h-80">
+        {event.bannerImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={event.bannerImageUrl}
+            alt=""
+            loading="eager"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-raised via-transparent to-black/60" />
+        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+          {countdown && (
+            <p className="mb-2 font-mono text-xs font-bold uppercase tracking-widest text-brand-500">
+              Starts in {countdown}
+            </p>
+          )}
+          <h1 className="text-3xl font-black uppercase leading-[0.95] tracking-tightest text-white sm:text-5xl">
             {event.title}
-          </span>
+          </h1>
         </div>
-      )}
+      </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold text-neutral-900">
-          {event.title}
-        </h1>
+        <p className="font-mono text-sm text-zinc-400">
+          {formatDateTime(event.startsAt)}
+        </p>
         {formatRatingSummary(ratingSummary) && (
-          <span className="text-sm text-neutral-500">
+          <span className="text-sm text-zinc-500">
             {formatRatingSummary(ratingSummary)}
           </span>
         )}
       </div>
-      <p className="mt-1 text-neutral-500">{formatDateTime(event.startsAt)}</p>
 
       {restaurant && (
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-zinc-500">
           at{" "}
           <Link
             href={`/restaurants/${restaurant.id}`}
-            className="text-brand-600 hover:underline"
+            className="text-brand-500 hover:underline"
           >
             {restaurant.name}
           </Link>
@@ -163,14 +201,16 @@ export default function EventDetailPage() {
       )}
 
       {event.description && (
-        <p className="mt-4 text-neutral-700">{event.description}</p>
+        <p className="mt-4 max-w-2xl text-base font-medium leading-relaxed text-zinc-300">
+          {event.description}
+        </p>
       )}
 
-      <h2 className="mt-10 text-xl font-semibold text-neutral-900">
+      <h2 className="mt-10 text-2xl font-black uppercase tracking-tightest text-white">
         Tickets
       </h2>
       {tiers.length === 0 ? (
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="mt-2 text-sm text-zinc-500">
           Ticket tiers haven&apos;t been published for this event yet.
         </p>
       ) : (
@@ -182,10 +222,8 @@ export default function EventDetailPage() {
               <Card key={tier.id}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-medium text-neutral-900">
-                      {tier.name}
-                    </h3>
-                    <p className="text-sm text-neutral-500">
+                    <h3 className="font-bold text-white">{tier.name}</h3>
+                    <p className="font-mono text-sm text-zinc-400">
                       {formatPrice(tier)}
                     </p>
                   </div>
@@ -198,19 +236,17 @@ export default function EventDetailPage() {
                   )}
                 </div>
                 {offers.length > 0 && (
-                  <div className="mt-3 space-y-1 border-t border-neutral-100 pt-3">
+                  <div className="mt-3 space-y-1 border-t border-zinc-800 pt-3">
                     {offers.map((offer) => (
                       <div
                         key={offer.id}
                         className="flex items-center justify-between text-sm"
                       >
-                        <span className="text-neutral-700">
+                        <span className="text-zinc-300">
                           {offer.name}
                           {offer.description ? ` — ${offer.description}` : ""}
                         </span>
-                        <Badge tone="success">
-                          {discountSummary(offer)}
-                        </Badge>
+                        <Badge tone="warning">{discountSummary(offer)}</Badge>
                       </div>
                     ))}
                   </div>

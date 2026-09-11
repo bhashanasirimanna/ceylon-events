@@ -69,7 +69,7 @@ export function RatingForm({
 
   if (rated) {
     return (
-      <p className={compact ? "text-xs text-green-700" : "text-sm text-green-700"}>
+      <p className={compact ? "text-xs text-trust-300" : "text-sm text-trust-300"}>
         {ratedLabel} {"★".repeat(rated.stars)}
         {"☆".repeat(5 - rated.stars)}
       </p>
@@ -78,7 +78,7 @@ export function RatingForm({
 
   if (status === "already-rated") {
     return (
-      <p className={compact ? "text-xs text-neutral-500" : "text-sm text-neutral-500"}>
+      <p className={compact ? "text-xs text-zinc-500" : "text-sm text-zinc-500"}>
         Already rated
       </p>
     );
@@ -93,7 +93,7 @@ export function RatingForm({
   return (
     <div className={compact ? "mt-1" : "mt-3"}>
       {!compact && (
-        <p className="mb-1 text-sm font-medium text-neutral-900">{label}</p>
+        <p className="mb-1 text-sm font-medium text-white">{label}</p>
       )}
       <div className="flex items-center gap-2">
         <div className="flex">
@@ -106,7 +106,7 @@ export function RatingForm({
               onMouseLeave={() => setHoverStars(0)}
               onClick={() => setStars(n)}
               className={`${compact ? "text-base" : "text-xl"} leading-none ${
-                n <= displayStars ? "text-amber-500" : "text-neutral-300"
+                n <= displayStars ? "text-brand-500" : "text-zinc-700"
               }`}
             >
               ★
@@ -129,9 +129,9 @@ export function RatingForm({
             placeholder="Optional comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            className="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
           />
-          {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+          {error && <p className="mt-1 text-sm text-brand-400">{error}</p>}
           <Button
             className="mt-2"
             disabled={stars < 1 || isSubmitting}
@@ -141,7 +141,7 @@ export function RatingForm({
           </Button>
         </>
       )}
-      {compact && error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {compact && error && <p className="mt-1 text-xs text-brand-400">{error}</p>}
     </div>
   );
 }

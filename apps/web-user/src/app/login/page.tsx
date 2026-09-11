@@ -32,29 +32,29 @@ export default function LoginPage() {
   return (
     <main className="mx-auto max-w-sm px-4 py-16">
       <Card>
-        <h1 className="text-xl font-semibold text-neutral-900">Log in</h1>
+        <h1 className="text-xl font-semibold text-white">Log in</h1>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div>
-            <label className="text-sm text-neutral-700">Email</label>
+            <label className="text-sm text-zinc-300">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
             />
           </div>
           <div>
-            <label className="text-sm text-neutral-700">Password</label>
+            <label className="text-sm text-zinc-300">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-none border border-zinc-700 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-zinc-500"
             />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-brand-400">{error}</p>}
           <Button
             type="submit"
             variant="party"
@@ -64,7 +64,7 @@ export default function LoginPage() {
             {isSubmitting ? "Logging in…" : "Log in"}
           </Button>
         </form>
-        <p className="mt-4 text-sm text-neutral-500">
+        <p className="mt-4 text-sm text-zinc-500">
           No account?{" "}
           <Link href="/register" className="text-brand-600">
             Sign up

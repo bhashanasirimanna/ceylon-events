@@ -228,13 +228,13 @@ export default function SeatPickerPage() {
         demonstrates the seat hold mechanism only.
       </div>
 
-      <h1 className="text-xl font-semibold text-neutral-900">
+      <h1 className="text-xl font-black uppercase tracking-tightest text-white">
         {snapshot.name}
       </h1>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-      <div className="mt-4 overflow-x-auto rounded-lg border border-neutral-200 bg-white p-2">
+      <div className="mt-4 overflow-x-auto border border-zinc-800 bg-surface-raised p-2">
         <SeatMapCanvas
           data={snapshot}
           seatStatuses={seatStatuses}
@@ -243,21 +243,21 @@ export default function SeatPickerPage() {
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-neutral-600">
+      <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#e2e8f0]" />
+          <span className="inline-block h-3 w-3 rounded-full bg-zinc-800" />
           Available
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#fde68a]" />
+          <span className="inline-block h-3 w-3 rounded-full bg-perk-500" />
           Held by someone else
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#93c5fd]" />
+          <span className="inline-block h-3 w-3 rounded-full bg-brand-500" />
           Held by you
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#fca5a5]" />
+          <span className="inline-block h-3 w-3 rounded-full bg-zinc-600" />
           Sold
         </span>
       </div>
@@ -265,10 +265,10 @@ export default function SeatPickerPage() {
       {hold && (
         <Card className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="font-medium text-neutral-900">
+            <p className="font-medium text-white">
               Holding seat {heldSeatLabel ?? hold.seatId}
             </p>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-zinc-400">
               Hold expires in {formatCountdown(hold.expiresAt)}
             </p>
           </div>
@@ -284,12 +284,12 @@ export default function SeatPickerPage() {
       )}
 
       {!user && !authLoading && (
-        <p className="mt-6 text-sm text-neutral-500">
+        <p className="mt-6 text-sm text-zinc-400">
           Log in to hold a seat — browsing is open to everyone.
         </p>
       )}
 
-      <p className="mt-6 text-sm text-neutral-500">
+      <p className="mt-6 text-sm text-zinc-400">
         Seat map for restaurant {restaurantId}
       </p>
     </main>
