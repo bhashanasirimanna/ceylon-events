@@ -236,6 +236,20 @@ export default function FoodPreOrderPage() {
                 return (
                   <Card key={item.id}>
                     <div className="flex items-start justify-between gap-3">
+                      <div className="h-16 w-16 flex-none overflow-hidden rounded-none bg-zinc-900">
+                        {item.photoUrls[0] ? (
+                          <img
+                            src={item.photoUrls[0]}
+                            alt={item.name}
+                            loading="lazy"
+                            width={64}
+                            height={64}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-br from-zinc-900 to-black" />
+                        )}
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-medium text-white">
