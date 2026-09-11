@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Badge, Button, Card } from "@ceylon/design-system";
+import { Badge, Button, Card, ImageUploader } from "@ceylon/design-system";
 import { DiscountType, EventStatus, RedemptionType } from "@ceylon/shared-types";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
@@ -156,6 +156,19 @@ export default function EventManagePage() {
       setError(err instanceof ApiError ? err.message : "Action failed");
     } finally {
       setStatusActioning(false);
+    }
+  }
+
+  async function updateBanner(urls: string[]) {
+    setError(null);
+    try {
+      await apiFetch(`/events/${eventId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ bannerImageUrl: urls[0] ?? null }),
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update cover image");
     }
   }
 
@@ -374,6 +387,26 @@ export default function EventManagePage() {
             </div>
 
             <Card className="mb-6">
+              {event.bannerImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={event.bannerImageUrl}
+                  alt=""
+                  className="mb-3 h-40 w-full rounded-md object-cover"
+                />
+              )}
+              <div className="mb-3">
+                <span className="mb-1 block text-xs font-medium text-neutral-500">
+                  Cover image
+                </span>
+                <ImageUploader
+                  category="event-banner"
+                  urls={event.bannerImageUrl ? [event.bannerImageUrl] : []}
+                  onChange={updateBanner}
+                  apiFetch={apiFetch}
+                  maxImages={1}
+                />
+              </div>
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-semibold text-neutral-900">

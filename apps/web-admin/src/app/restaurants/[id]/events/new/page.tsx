@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Card } from "@ceylon/design-system";
+import { Button, Card, ImageUploader } from "@ceylon/design-system";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api-client";
 import type { Event } from "@/lib/types";
@@ -25,6 +25,7 @@ export default function NewEventPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startsAt, setStartsAt] = useState("");
+  const [bannerUrls, setBannerUrls] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +86,7 @@ export default function NewEventPage() {
           title,
           description: description || undefined,
           startsAt: new Date(startsAt).toISOString(),
+          bannerImageUrl: bannerUrls[0] ?? undefined,
           seatMapVersionId:
             selectedSeatMapId === NO_SEAT_MAP || !selectedVersionId
               ? null
@@ -140,6 +142,17 @@ export default function NewEventPage() {
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-neutral-700">
+              Cover image
+              <ImageUploader
+                category="event-banner"
+                urls={bannerUrls}
+                onChange={setBannerUrls}
+                apiFetch={apiFetch}
+                maxImages={1}
               />
             </label>
 

@@ -121,12 +121,19 @@ export default function EventDetailPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      {event.bannerImageUrl && (
+      {event.bannerImageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={event.bannerImageUrl}
           alt=""
           className="mb-6 h-64 w-full rounded-lg object-cover"
         />
+      ) : (
+        <div className="mb-6 flex h-64 w-full items-end rounded-lg bg-night-gradient p-6">
+          <span className="bg-party-gradient bg-clip-text text-xl font-bold text-transparent">
+            {event.title}
+          </span>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
